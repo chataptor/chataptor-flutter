@@ -1,0 +1,210 @@
+# CLAUDE.md — Chataptor Flutter SDK
+
+Guide for Claude Code and any engineer working in this repository. Read this before touching code.
+
+## Project
+
+Official Flutter SDK for [Chataptor](https://chataptor.com) — real-time multilingual customer support chat. Two packages published to pub.dev:
+
+- **`chataptor`** — pure-Dart headless core client. Phoenix Channels transport behind a port abstraction, custom `ValueStream<T>` state exposure, sealed Dart 3 Result/Error types. Zero Flutter dependency.
+- **`chataptor_flutter`** — Flutter layer on top of the core. Singleton, `ChataptorScope`, widgets, theme, localizations, lifecycle observer.
+
+MIT license. Verified publisher target: `chataptor.com`.
+
+## Status (2026-04-22)
+
+**v0.1.0 MVP under implementation.** Spec and plan are committed:
+
+- **Design spec:** [`docs/specs/2026-04-22-flutter-sdk-design.md`](./docs/specs/2026-04-22-flutter-sdk-design.md) — 14 sections, 1262 lines. Architecture, positioning, 25 locked decisions.
+- **Implementation plan:** [`docs/plans/2026-04-22-v0.1.0-mvp-implementation.md`](./docs/plans/2026-04-22-v0.1.0-mvp-implementation.md) — 50 tasks across 10 phases, 8490 lines, bite-sized TDD steps with complete code in every step.
+
+**Before suggesting any architectural alternative:** read the spec's §4 decision table. If the decision is already there, don't re-litigate it unless new information has emerged.
+
+## Tech stack
+
+- **Dart SDK:** `^3.9.0` (sealed classes, pattern matching, records required).
+- **Flutter:** `>=3.24.0` (floor version). CI matrix: `3.24.0` / `stable` / `beta`.
+- **Monorepo:** Melos 7 + native Pub Workspaces. Melos config lives inside root `pubspec.yaml` under a `melos:` key — **no separate `melos.yaml`** (that was pre-Melos-7).
+- **Transport:** `phoenix_socket` hidden behind a `ChatTransport` port abstraction — types never leak to public API, swappable when community package drifts.
+- **Linting:** `very_good_analysis` + `public_member_api_docs: true` (100% dartdoc on public API enforced).
+- **Testing:** `package:test` for pure-Dart, `flutter_test` for UI, `mocktail` for internal mocks. Merchants get `package:chataptor/testing.dart` sub-library with `FakeChataptorClient` — no Mockito required on their side.
+- **NOT used (explicit YAGNI):** Freezed (forces `build_runner` on consumers), rxdart (custom `ValueStream<T>` is 50 lines).
+
+## Repository layout
+
+```
+chataptor-flutter/
+├── packages/
+│   ├── chataptor/              # pure-Dart core
+│   │   ├── lib/
+│   │   │   ├── chataptor.dart  # public API barrel
+│   │   │   ├── testing.dart    # FakeChataptorClient, FakeChatTransport
+│   │   │   └── src/            # {auth, client, config, errors, hooks,
+│   │   │                       #  http, logger, models, storage, streams,
+│   │   │                       #  transport, translation}
+│   │   └── test/
+│   └── chataptor_flutter/      # Flutter layer
+│       ├── lib/
+│       │   ├── chataptor_flutter.dart  # barrel (re-exports core)
+│       │   └── src/            # {adapters, chataptor.dart, lifecycle,
+│       │                       #  l10n, scope, theme, widgets}
+│       └── test/
+├── examples/
+│   └── quickstart/             # minimal runnable demo
+├── docs/
+│   ├── specs/                  # design documents
+│   ├── plans/                  # implementation plans
+│   └── guides/                 # user-facing guides (getting-started, etc.)
+├── .github/workflows/          # CI: ci.yml, examples-build.yml
+├── pubspec.yaml                # workspace root + Melos config
+├── analysis_options.yaml       # shared lints
+├── CLAUDE.md                   # this file
+├── CONTRIBUTING.md
+├── CODE_OF_CONDUCT.md
+├── CHANGELOG.md                # top-level aggregate
+├── README.md
+└── LICENSE                     # MIT
+```
+
+## Commands
+
+From repo root:
+
+```bash
+# Single resolve for the whole workspace (Pub Workspaces feature).
+dart pub get
+
+# Quality gates (use these before committing).
+melos run analyze        # dart analyze --fatal-infos on every package
+melos run format-check   # dart format --set-exit-if-changed .
+melos run format         # dart format . (fix mode)
+melos run test           # flutter test in packages that have test/
+melos run pana           # pana score check (target ≥140/160 per package)
+```
+
+Per-package:
+
+```bash
+cd packages/chataptor
+flutter test                                      # all tests
+flutter test test/path/to/single_test.dart        # one file
+flutter test --name "specific test name"          # one test by name
+dart analyze --fatal-infos                        # lint check
+```
+
+## Conventions
+
+### Commits
+
+Conventional Commits with package scope where applicable:
+
+- `feat(chataptor): add ...` — new user-facing feature in core package
+- `feat(chataptor_flutter): add ...` — new feature in Flutter package
+- `fix(chataptor): resolve ...` — bugfix
+- `chore: ...` — repo hygiene (CI, config, deps)
+- `docs: ...` — documentation
+- `test: ...` — test-only change (rare — usually grouped with feat/fix)
+- `refactor(chataptor): ...` — internal restructuring with no behaviour change
+
+**Rules:**
+- Subject line ≤ 72 chars.
+- Use HEREDOC for multi-line commit messages.
+- **No** `Co-Authored-By: Claude <...>` footer.
+- **No** "Generated with Claude Code" footer.
+
+### Branches
+
+- Trunk-based — PRs target `main`, short-lived branches (`feature/…`, `fix/…`).
+- `main` has branch protection: CI + pana required before merge.
+- **Never** push to `main` directly. **Never** force-push `main`.
+
+### TDD workflow
+
+Every task in the implementation plan follows this rhythm — do not skip steps:
+
+1. Write failing test.
+2. `flutter test <path>` — verify it fails with the expected error message.
+3. Write minimal implementation.
+4. `flutter test <path>` — verify it passes.
+5. `git commit` (test + implementation together as one commit).
+
+No exceptions for "trivial" code. The plan's 50 tasks are all sized to this rhythm.
+
+### Dartdoc
+
+**100% public API coverage.** The `public_member_api_docs` lint is `true` — it will fail the build if any exported symbol lacks a doc comment.
+
+Write doc comments that explain **why** the type exists and when to use it, not just what it does. Function `fetchMessages()` — the reader can see it fetches messages from the name; tell them about pagination, error modes, and the performance shape.
+
+## Key tech decisions — TL;DR
+
+Locked in during brainstorming + research phase. Do **not** re-litigate without new evidence. Full reasoning in spec §4.
+
+1. **Two-package federated monorepo** — `chataptor` (pure-Dart) + `chataptor_flutter` (widgets).
+2. **Customer-only persona.** Agent app is a separate product in a separate repo.
+3. **No end-to-end encryption.** Fundamentally incompatible with server-side translation, multi-agent assignment, Translation Memory, PII masking, analytics. Industry pattern — no B2C support chat uses E2E. Full rationale in spec §3.3.
+4. **Phoenix transport via a port.** `phoenix_socket` types never leak into public API; the package can be forked or replaced without breaking consumers.
+5. **`ValueStream<T>` custom, no rxdart.** Dual sync + stream access in ~50 lines with zero dependencies.
+6. **Sealed Result + exceptions split.** Sealed `SendResult` / `ChataptorError` for recoverable async flows; `ChataptorStateError` / `ChataptorConfigurationError` (subclasses of `StateError` / `ArgumentError`) for programmer errors.
+7. **Two connection modes only:** `lazy` (default — connect on chat open, disconnect on close) and `foregroundActive` (connect while app is in foreground). `eager` and `pushOnly` were cut as unrealistic on mobile (iOS kills background sockets within seconds).
+8. **Translation is first-class top-level config** — exposed at the root of `ChataptorConfig`, not buried in `FeatureToggles`. It is the product differentiator.
+9. **Hand-written immutable classes.** No Freezed — avoids forcing `build_runner` on every merchant's project.
+10. **Testing sub-library in-package.** `package:chataptor/testing.dart` exports `FakeChataptorClient` and `FakeChatTransport`. Merchants skip Mockito setup entirely.
+11. **EN + PL locales for v0.1.0.** Ten more locales (`de`, `es`, `fr`, `it`, `uk`, `cs`, `pt`, `ja`, `zh`, `ar`) arrive in v0.5.0.
+12. **A11y `Semantics` labels from v0.1.0.** Blocking a11y tests in CI from v0.5.0.
+13. **Platforms:** iOS + Android officially from v0.1.0; Flutter Web best-effort through v0.5.0, officially from v0.6.0; Desktop works as pure-Dart side effect, never promoted.
+14. **MIT license. Verified publisher `chataptor.com`. OIDC-based trusted publishing** — no long-lived tokens in CI secrets.
+15. **Core package direct dependencies capped at 4:** `async`, `http`, `meta`, `phoenix_socket`. New deps need strong justification.
+
+## Workflow for Claude Code sessions
+
+### Bootstrap on a fresh session
+
+Read in this order:
+
+1. **This file** (`CLAUDE.md`) — auto-loaded by Claude Code.
+2. **Memory files** at `~/.claude/projects/C--Users-pitom-Desktop-Projekty-chataptor-flutter/memory/` — auto-loaded. User profile, workflow preferences, project status.
+3. **Spec §4 decision table** (`docs/specs/2026-04-22-flutter-sdk-design.md`) — know what is already decided.
+4. **Plan** (`docs/plans/2026-04-22-v0.1.0-mvp-implementation.md`) — open to the task you're about to execute.
+
+### Executing the plan
+
+The plan ends with an execution-mode choice. Two supported options — let the user pick before dispatching any work:
+
+- **Subagent-driven** (recommended by `superpowers:writing-plans`) — dispatch a fresh subagent per task via `superpowers:subagent-driven-development`. Fresh context per task, review between tasks.
+- **Inline execution** — `superpowers:executing-plans`, batch with checkpoints.
+
+### When stuck on the `phoenix_socket` layer (Task 18)
+
+The plan targets `phoenix_socket ^0.12.0`. If `dart pub get` pulls a different compatible minor, the concrete API names (`stateStream`, `addChannel`, `PhoenixSocketOpenEvent`, etc.) may have moved. Check the actual installed version at `.dart_tool/package_config.json`, read the installed package's `lib/phoenix_socket.dart`, and reconcile. Keep the **shape** of `PhoenixSocketTransport` identical — only the internal `phoenix_socket` call sites should change. The `ChatTransport` contract and every caller depend on that being unchanged.
+
+### When writing widget tests
+
+- Always call `TestWidgetsFlutterBinding.ensureInitialized()` at the top of `main()`.
+- For tests touching `SharedPreferences`, call `SharedPreferences.setMockInitialValues({})` in `setUp`.
+- Use `tester.pump(Duration(...))` rather than `pumpAndSettle` when async streams are involved — `pumpAndSettle` can deadlock on broadcast streams.
+
+### What NOT to do
+
+- ❌ Add dependencies to `packages/chataptor/pubspec.yaml` beyond the agreed 4. Each new dep needs a compelling spec-level justification.
+- ❌ Introduce `package:flutter/*` imports into `packages/chataptor/lib/`. Core is pure Dart.
+- ❌ Skip the failing-test step in TDD.
+- ❌ Push to `main`. Always PR.
+- ❌ Force-push any branch someone else might have fetched.
+- ❌ Re-open decisions from spec §4 without new information.
+- ❌ Reference the private backend repo or agent mobile app repo by name in public artifacts (commits, PR descriptions, public docs). Both remain unnamed in this open-source project.
+
+## Language
+
+User-facing responses and conversation: **Polish**, preserving all diacritics (`ą ć ę ł ń ó ś ź ż`). Never substitute ASCII for accented characters.
+
+Code, identifiers, commit messages, dartdoc, pub.dev descriptions, READMEs, guides: **English** (for pub.dev reach and international contributor accessibility).
+
+## Related repos (not linked here on purpose)
+
+- **Chataptor backend** — private Elixir/Phoenix repo, stays closed-source. Contract documented in spec §8 + backend's own `docs/06-api-specification.md`.
+- **Chataptor agent mobile app** — separate private Flutter app for agents (not customers). Not in scope of this SDK.
+
+## Last updated
+
+2026-04-22 — initial CLAUDE.md, written alongside the design spec and implementation plan as the project transitions from planning to implementation.
