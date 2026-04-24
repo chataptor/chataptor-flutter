@@ -22,13 +22,22 @@ MIT license. Verified publisher target: `chataptor.com`.
 
 ## Tech stack
 
-- **Dart SDK:** `^3.9.0` (sealed classes, pattern matching, records required).
-- **Flutter:** `>=3.24.0` (floor version). CI matrix: `3.24.0` / `stable` / `beta`.
+- **Dart SDK:** `^3.9.0` (sealed classes, pattern matching, records required — the Dart 3 features we rely on are available from Dart 3.0, but we pin 3.9 to unlock `super_sliver_list` perf work and keep the toolchain aligned with the floor Flutter that bundles Dart 3.9).
+- **Flutter:** `>=3.35.0` (floor version). Flutter 3.35 is the first stable that ships Dart 3.9; older Flutter versions will fail `dart pub get` on the `^3.9.0` SDK constraint. CI matrix: `3.35.0` (pinned floor) / `stable` / `beta`.
+- **Compatibility matrix** (verify before raising/lowering):
+
+  | Flutter | Bundled Dart | Supported here |
+  |---------|--------------|----------------|
+  | `3.35.x` | `3.9.x` | ✅ floor |
+  | `3.32.x` | `3.8.x` | ❌ blocked by Dart 3.9 floor |
+  | `3.29.x` | `3.7.x` | ❌ |
+  | `3.24.x` | `3.5.x` | ❌ |
+
 - **Monorepo:** Melos 7 + native Pub Workspaces. Melos config lives inside root `pubspec.yaml` under a `melos:` key — **no separate `melos.yaml`** (that was pre-Melos-7).
-- **Transport:** `phoenix_socket` hidden behind a `ChatTransport` port abstraction — types never leak to public API, swappable when community package drifts.
+- **Transport:** `phoenix_socket` hidden behind a `ChatTransport` port abstraction — concrete package types never leak to public API, swappable when community package drifts.
 - **Linting:** `very_good_analysis` + `public_member_api_docs: true` (100% dartdoc on public API enforced).
-- **Testing:** `package:test` for pure-Dart, `flutter_test` for UI, `mocktail` for internal mocks. Merchants get `package:chataptor/testing.dart` sub-library with `FakeChataptorClient` — no Mockito required on their side.
-- **NOT used (explicit YAGNI):** Freezed (forces `build_runner` on consumers), rxdart (custom `ValueStream<T>` is 50 lines).
+- **Testing:** `package:test` for pure-Dart, `flutter_test` for UI, `mocktail` for internal mocks. Merchants get `package:chataptor/testing.dart` sub-library with `FakeChataptorClient` (merchant-facing, high-level) and `FakeChatTransport` (transport-level, for SDK development) — no Mockito required on either side.
+- **NOT used (explicit YAGNI):** Freezed (forces `build_runner` on consumers), rxdart (custom `ValueStream<T>` is ~50 lines).
 
 ## Repository layout
 
@@ -154,7 +163,7 @@ Locked in during brainstorming + research phase. Do **not** re-litigate without 
 12. **A11y `Semantics` labels from v0.1.0.** Blocking a11y tests in CI from v0.5.0.
 13. **Platforms:** iOS + Android officially from v0.1.0; Flutter Web best-effort through v0.5.0, officially from v0.6.0; Desktop works as pure-Dart side effect, never promoted.
 14. **MIT license. Verified publisher `chataptor.com`. OIDC-based trusted publishing** — no long-lived tokens in CI secrets.
-15. **Core package direct dependencies capped at 4:** `async`, `http`, `meta`, `phoenix_socket`. New deps need strong justification.
+15. **Core package direct dependencies capped at 4:** `async`, `http`, `meta`, `phoenix_socket`. `web_socket_channel` enters transitively via `phoenix_socket` — it does **not** count against the direct-dep budget. New direct deps need strong justification.
 
 ## Workflow for Claude Code sessions
 
@@ -177,6 +186,10 @@ The plan ends with an execution-mode choice. Two supported options — let the u
 ### When stuck on the `phoenix_socket` layer (Task 18)
 
 The plan targets `phoenix_socket ^0.12.0`. If `dart pub get` pulls a different compatible minor, the concrete API names (`stateStream`, `addChannel`, `PhoenixSocketOpenEvent`, etc.) may have moved. Check the actual installed version at `.dart_tool/package_config.json`, read the installed package's `lib/phoenix_socket.dart`, and reconcile. Keep the **shape** of `PhoenixSocketTransport` identical — only the internal `phoenix_socket` call sites should change. The `ChatTransport` contract and every caller depend on that being unchanged.
+
+### Connection lifecycle rules
+
+`ConnectionMode.lazy` is the default and means *exactly* "connect when chat UI mounts, disconnect when it unmounts". Widgets that open the socket must also close it — `ChataptorChatScreen.dispose()` is responsible for calling `client.disconnect()` when the configured mode is `lazy`. The lifecycle observer (`ChataptorLifecycleObserver`) only drives connect/disconnect in `foregroundActive` mode; it is a no-op for `lazy`. If you add a new container widget (e.g. `ChataptorChatSheet` in v0.4.0), it must own the same `lazy`-disconnect contract.
 
 ### When writing widget tests
 
