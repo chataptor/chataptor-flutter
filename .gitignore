@@ -68,3 +68,6 @@ $RECYCLE.BIN/
 .env
 .env.local
 .env.*.local
+
+# Git worktrees
+.worktrees/
