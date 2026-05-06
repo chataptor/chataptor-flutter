@@ -37,6 +37,9 @@ final class AuthenticationError extends ChataptorError {
     super.underlyingException,
     super.stackTrace,
   });
+
+  @override
+  String toString() => 'AuthenticationError: $message';
 }
 
 /// Network-layer failure — DNS, timeout, TLS, etc.
@@ -47,6 +50,9 @@ final class NetworkError extends ChataptorError {
     super.underlyingException,
     super.stackTrace,
   });
+
+  @override
+  String toString() => 'NetworkError: $message';
 }
 
 /// Server indicated the client is rate-limited.
@@ -61,6 +67,9 @@ final class RateLimitError extends ChataptorError {
 
   /// How long to wait before retrying.
   final Duration retryAfter;
+
+  @override
+  String toString() => 'RateLimitError: $message';
 }
 
 /// Server returned an unexpected 5xx-class error.
@@ -71,6 +80,9 @@ final class ServerError extends ChataptorError {
     super.underlyingException,
     super.stackTrace,
   });
+
+  @override
+  String toString() => 'ServerError: $message';
 }
 
 /// Request failed validation on the server.
@@ -85,6 +97,9 @@ final class ValidationError extends ChataptorError {
 
   /// Map of field name to list of validation failure messages.
   final Map<String, List<String>> fieldErrors;
+
+  @override
+  String toString() => 'ValidationError: $message';
 }
 
 /// The transport connection dropped in the middle of an operation.
@@ -95,6 +110,9 @@ final class ConnectionLostError extends ChataptorError {
     super.underlyingException,
     super.stackTrace,
   });
+
+  @override
+  String toString() => 'ConnectionLostError: $message';
 }
 
 /// Thrown when the SDK is used incorrectly — e.g. calling `sendMessage`

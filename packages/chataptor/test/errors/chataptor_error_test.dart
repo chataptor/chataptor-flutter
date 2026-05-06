@@ -63,4 +63,40 @@ void main() {
       expect(e.message, 'widgetKey is empty');
     });
   });
+
+  group('ChataptorError.toString()', () {
+    test('includes the concrete subclass name', () {
+      expect(
+        const AuthenticationError('bad key').toString(),
+        contains('AuthenticationError'),
+      );
+      expect(
+        const NetworkError('offline').toString(),
+        contains('NetworkError'),
+      );
+      expect(
+        const RateLimitError(
+          'slow down',
+          retryAfter: Duration(seconds: 5),
+        ).toString(),
+        contains('RateLimitError'),
+      );
+      expect(const ServerError('500').toString(), contains('ServerError'));
+      expect(
+        const ValidationError('invalid', fieldErrors: {}).toString(),
+        contains('ValidationError'),
+      );
+      expect(
+        const ConnectionLostError('dropped').toString(),
+        contains('ConnectionLostError'),
+      );
+    });
+
+    test('includes the message', () {
+      expect(
+        const AuthenticationError('invalid widget key').toString(),
+        contains('invalid widget key'),
+      );
+    });
+  });
 }

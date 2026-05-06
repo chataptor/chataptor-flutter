@@ -69,5 +69,31 @@ void main() {
       await vs.close();
       expect(() => vs.add(1), throwsStateError);
     });
+
+    test('seeded() has hasValue=true and correct value immediately', () {
+      final vs = ValueStream<int>.seeded(99);
+      expect(vs.hasValue, isTrue);
+      expect(vs.value, 99);
+    });
+
+    test('seeded() emits initial value to first subscriber', () async {
+      final vs = ValueStream<int>.seeded(42);
+      final first = await vs.stream.first;
+      expect(first, 42);
+    });
+
+    test('nullable T: null is a valid value distinct from no-value', () {
+      final vs = ValueStream<int?>();
+      expect(vs.hasValue, isFalse);
+      vs.add(null);
+      expect(vs.hasValue, isTrue);
+      expect(vs.value, isNull);
+    });
+
+    test('nullable T seeded with null has hasValue=true', () {
+      final vs = ValueStream<int?>.seeded(null);
+      expect(vs.hasValue, isTrue);
+      expect(vs.value, isNull);
+    });
   });
 }
