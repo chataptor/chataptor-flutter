@@ -10,15 +10,13 @@ void main() {
     });
 
     test('stores value after add', () {
-      final vs = ValueStream<int>();
-      vs.add(42);
+      final vs = ValueStream<int>()..add(42);
       expect(vs.hasValue, isTrue);
       expect(vs.value, 42);
     });
 
     test('emits current value to late subscriber', () async {
-      final vs = ValueStream<int>();
-      vs.add(7);
+      final vs = ValueStream<int>()..add(7);
       final first = await vs.stream.first;
       expect(first, 7);
     });
@@ -27,26 +25,30 @@ void main() {
       final vs = ValueStream<int>();
       final received = <int>[];
       final sub = vs.stream.listen(received.add);
-      vs.add(1);
-      vs.add(2);
-      vs.add(3);
+      vs
+        ..add(1)
+        ..add(2)
+        ..add(3);
       await Future<void>.delayed(Duration.zero);
       await sub.cancel();
       expect(received, [1, 2, 3]);
     });
 
-    test('late subscriber sees latest value then subsequent emissions', () async {
-      final vs = ValueStream<int>();
-      vs.add(10);
-      vs.add(20);
-      final received = <int>[];
-      final sub = vs.stream.listen(received.add);
-      await Future<void>.delayed(Duration.zero);
-      vs.add(30);
-      await Future<void>.delayed(Duration.zero);
-      await sub.cancel();
-      expect(received, [20, 30]);
-    });
+    test(
+      'late subscriber sees latest value then subsequent emissions',
+      () async {
+        final vs = ValueStream<int>()
+          ..add(10)
+          ..add(20);
+        final received = <int>[];
+        final sub = vs.stream.listen(received.add);
+        await Future<void>.delayed(Duration.zero);
+        vs.add(30);
+        await Future<void>.delayed(Duration.zero);
+        await sub.cancel();
+        expect(received, [20, 30]);
+      },
+    );
 
     test('supports multiple listeners (broadcast)', () async {
       final vs = ValueStream<int>();

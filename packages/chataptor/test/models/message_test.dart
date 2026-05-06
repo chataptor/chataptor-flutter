@@ -10,17 +10,16 @@ void main() {
     String id = 'm1',
     String body = 'hello',
     MessageAuthor author = MessageAuthor.customer,
-  }) =>
-      Message(
-        id: id,
-        conversationId: 'c1',
-        body: body,
-        author: author,
-        timestamp: timestamp,
-        type: MessageType.text,
-        deliveryChannel: DeliveryChannel.websocket,
-        status: MessageStatus.sent,
-      );
+  }) => Message(
+    id: id,
+    conversationId: 'c1',
+    body: body,
+    author: author,
+    timestamp: timestamp,
+    type: MessageType.text,
+    deliveryChannel: DeliveryChannel.websocket,
+    status: MessageStatus.sent,
+  );
 
   test('defaults for optional fields', () {
     final m = sample();

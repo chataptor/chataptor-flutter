@@ -14,9 +14,7 @@ class ValueStream<T> {
   ValueStream();
 
   /// Creates a [ValueStream] seeded with [initialValue].
-  ValueStream.seeded(T initialValue)
-      : _value = initialValue,
-        _hasValue = true;
+  ValueStream.seeded(T initialValue) : _value = initialValue, _hasValue = true;
 
   final StreamController<T> _controller = StreamController<T>.broadcast();
   T? _value;
@@ -39,14 +37,14 @@ class ValueStream<T> {
   /// controller is established synchronously at listen-time, ensuring no
   /// events are missed between subscription and the first emission.
   Stream<T> get stream => Stream<T>.multi((controller) {
-        if (_hasValue) controller.add(_value as T);
-        final sub = _controller.stream.listen(
-          controller.add,
-          onError: controller.addError,
-          onDone: controller.close,
-        );
-        controller.onCancel = sub.cancel;
-      });
+    if (_hasValue) controller.add(_value as T);
+    final sub = _controller.stream.listen(
+      controller.add,
+      onError: controller.addError,
+      onDone: controller.close,
+    );
+    controller.onCancel = sub.cancel;
+  });
 
   /// Emits [value] to all current subscribers and stores it for late
   /// subscribers.

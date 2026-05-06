@@ -36,7 +36,10 @@ void main() {
         ),
         'reconnecting',
       );
-      expect(label(const Disconnected(DisconnectReason.networkError)), 'disconnected');
+      expect(
+        label(const Disconnected(DisconnectReason.networkError)),
+        'disconnected',
+      );
     });
 
     test('equality compares concrete subtype and payload', () {

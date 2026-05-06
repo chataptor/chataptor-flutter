@@ -4,7 +4,7 @@ import 'package:chataptor/src/models/enums.dart';
 import 'package:test/test.dart';
 
 void main() {
-  final created = DateTime.utc(2026, 1, 1);
+  final created = DateTime.utc(2026);
 
   test('Conversation carries required and optional fields', () {
     final conv = Conversation(

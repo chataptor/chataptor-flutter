@@ -35,11 +35,11 @@ class CustomerIdentity {
   /// Creates an anonymous identity. The SDK will allocate a stable guest ID
   /// on first use.
   const CustomerIdentity.anonymous()
-      : id = null,
-        email = null,
-        name = null,
-        verificationHash = null,
-        customData = const {};
+    : id = null,
+      email = null,
+      name = null,
+      verificationHash = null,
+      customData = const {};
 
   /// Merchant-supplied stable ID for this customer (e.g., user row PK).
   final String? id;
@@ -92,13 +92,8 @@ class CustomerIdentity {
       _mapEquals(other.customData, customData);
 
   @override
-  int get hashCode => Object.hash(
-        id,
-        email,
-        name,
-        verificationHash,
-        _mapHash(customData),
-      );
+  int get hashCode =>
+      Object.hash(id, email, name, verificationHash, _mapHash(customData));
 }
 
 bool _mapEquals(Map<String, dynamic> a, Map<String, dynamic> b) {

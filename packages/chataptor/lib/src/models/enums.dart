@@ -1,4 +1,4 @@
-/// Who authored a [Message].
+/// Who authored a `Message`.
 enum MessageAuthor {
   /// The end customer — the host app's user.
   customer,
@@ -38,7 +38,7 @@ enum MessageStatus {
   /// An agent read the message.
   read,
 
-  /// Send failed after retries — surfaced via [SendFailure].
+  /// Send failed after retries — surfaced via `SendFailure`.
   failed,
 }
 
@@ -54,7 +54,7 @@ enum DeliveryChannel {
   api,
 }
 
-/// Coarse content type of an [Attachment].
+/// Coarse content type of an `Attachment`.
 enum AttachmentType {
   /// Raster image (png, jpg, webp, …).
   image,
@@ -69,7 +69,7 @@ enum AttachmentType {
   video,
 }
 
-/// Lifecycle status of a [Conversation].
+/// Lifecycle status of a `Conversation`.
 enum ConversationStatus {
   /// Conversation is ongoing and can receive new messages.
   open,
@@ -78,7 +78,7 @@ enum ConversationStatus {
   closed,
 }
 
-/// Which surfaces are active on a [Conversation]. A `hybrid` conversation may
+/// Which surfaces are active on a `Conversation`. A `hybrid` conversation may
 /// receive messages over chat AND email.
 enum ChannelType {
   /// Chat-only.

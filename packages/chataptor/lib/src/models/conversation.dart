@@ -4,7 +4,7 @@ import 'package:meta/meta.dart';
 
 /// The active conversation between a customer and the support team.
 ///
-/// The SDK maintains exactly one active [Conversation] per [ChataptorClient]
+/// The SDK maintains exactly one active `Conversation` per `ChataptorClient`
 /// at a time — the one the customer is currently chatting in. Historical
 /// conversations are accessed via history APIs rather than kept in memory.
 @immutable
@@ -75,12 +75,12 @@ class Conversation {
 
   @override
   int get hashCode => Object.hash(
-        id,
-        status,
-        channelType,
-        assignedAgent,
-        unreadCount,
-        createdAt,
-        lastMessageAt,
-      );
+    id,
+    status,
+    channelType,
+    assignedAgent,
+    unreadCount,
+    createdAt,
+    lastMessageAt,
+  );
 }

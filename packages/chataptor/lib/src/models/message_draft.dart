@@ -3,27 +3,21 @@ import 'package:meta/meta.dart';
 /// A message composed locally by the customer that has not (yet) been
 /// successfully delivered to the server.
 ///
-/// Attached to [SendFailure] so the caller can retry transmission without
+/// Attached to `SendFailure` so the caller can retry transmission without
 /// re-collecting user input.
 @immutable
 class MessageDraft {
   /// Creates a [MessageDraft].
-  const MessageDraft({
-    required this.body,
-    this.metadata = const {},
-  });
+  const MessageDraft({required this.body, this.metadata = const {}});
 
   /// The plain-text body the user typed.
   final String body;
 
-  /// Arbitrary merchant-supplied metadata to attach to the eventual [Message].
+  /// Arbitrary merchant-supplied metadata to attach to the eventual `Message`.
   final Map<String, dynamic> metadata;
 
   /// Returns a copy with the given fields overridden.
-  MessageDraft copyWith({
-    String? body,
-    Map<String, dynamic>? metadata,
-  }) {
+  MessageDraft copyWith({String? body, Map<String, dynamic>? metadata}) {
     return MessageDraft(
       body: body ?? this.body,
       metadata: metadata ?? this.metadata,

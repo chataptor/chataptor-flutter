@@ -43,12 +43,7 @@ void main() {
 
       expect(kind(const SendSuccess(MessageDraft(body: 'x'))), 'ok');
       expect(
-        kind(
-          const SendFailure(
-            NetworkError('x'),
-            MessageDraft(body: 'x'),
-          ),
-        ),
+        kind(const SendFailure(NetworkError('x'), MessageDraft(body: 'x'))),
         'fail',
       );
     });

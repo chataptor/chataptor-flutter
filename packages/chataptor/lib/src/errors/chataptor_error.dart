@@ -3,9 +3,9 @@ import 'package:meta/meta.dart';
 /// Base type for all recoverable errors emitted by the Chataptor SDK.
 ///
 /// Recoverable errors flow through `ChataptorClient.errors` and the result
-/// types returned by client methods (e.g. [SendResult]). For programmer
+/// types returned by client methods (e.g. `SendResult`). For programmer
 /// errors (e.g. calling `sendMessage` before `connect`), the SDK throws
-/// [ChataptorStateError] or [ChataptorConfigurationError] instead.
+/// `ChataptorStateError` or `ChataptorConfigurationError` instead.
 @immutable
 sealed class ChataptorError {
   /// Creates a [ChataptorError] with a human-readable [message] and optional
@@ -26,7 +26,7 @@ sealed class ChataptorError {
   final StackTrace? stackTrace;
 
   @override
-  String toString() => '$runtimeType: $message';
+  String toString() => 'ChataptorError: $message';
 }
 
 /// Authentication failed — typically an invalid `widgetKey` or `siteId`.
@@ -113,5 +113,5 @@ class ChataptorStateError extends StateError {
 /// Like [ChataptorStateError], this is a programmer error.
 class ChataptorConfigurationError extends ArgumentError {
   /// Creates a [ChataptorConfigurationError].
-  ChataptorConfigurationError(String message) : super(message);
+  ChataptorConfigurationError(super.message);
 }

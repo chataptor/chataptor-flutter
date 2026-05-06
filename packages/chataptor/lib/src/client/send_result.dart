@@ -3,7 +3,7 @@ import 'package:chataptor/src/models/message_draft.dart';
 import 'package:meta/meta.dart';
 
 /// Discriminated union describing the outcome of a
-/// [ChataptorClient.sendMessage] call.
+/// `ChataptorClient.sendMessage` call.
 @immutable
 sealed class SendResult {
   const SendResult();

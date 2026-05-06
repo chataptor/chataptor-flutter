@@ -2,7 +2,7 @@ import 'package:chataptor/src/models/attachment.dart';
 import 'package:chataptor/src/models/enums.dart';
 import 'package:meta/meta.dart';
 
-/// A single message in a [Conversation].
+/// A single message in a `Conversation`.
 ///
 /// Messages are immutable. The SDK emits a new [Message] with updated
 /// [status] on delivery/read transitions rather than mutating existing
@@ -30,7 +30,7 @@ class Message {
   /// Server-assigned message ID.
   final String id;
 
-  /// ID of the [Conversation] this message belongs to.
+  /// ID of the `Conversation` this message belongs to.
   final String conversationId;
 
   /// Body in the original author's language.
@@ -128,21 +128,21 @@ class Message {
 
   @override
   int get hashCode => Object.hash(
-        id,
-        conversationId,
-        body,
-        bodyTranslated,
-        sourceLanguage,
-        targetLanguage,
-        author,
-        timestamp,
-        Object.hashAll(attachments),
-        type,
-        richMetadata == null ? null : _mapHash(richMetadata!),
-        deliveryChannel,
-        status,
-        _mapHash(metadata),
-      );
+    id,
+    conversationId,
+    body,
+    bodyTranslated,
+    sourceLanguage,
+    targetLanguage,
+    author,
+    timestamp,
+    Object.hashAll(attachments),
+    type,
+    richMetadata == null ? null : _mapHash(richMetadata!),
+    deliveryChannel,
+    status,
+    _mapHash(metadata),
+  );
 }
 
 bool _listEquals<T>(List<T> a, List<T> b) {

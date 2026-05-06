@@ -9,14 +9,19 @@ void main() {
     });
 
     test('RateLimitError carries retryAfter', () {
-      const e = RateLimitError('rate limited', retryAfter: Duration(seconds: 30));
+      const e = RateLimitError(
+        'rate limited',
+        retryAfter: Duration(seconds: 30),
+      );
       expect(e.retryAfter, const Duration(seconds: 30));
     });
 
     test('ValidationError carries field errors', () {
       const e = ValidationError(
         'invalid fields',
-        fieldErrors: {'email': ['invalid format']},
+        fieldErrors: {
+          'email': ['invalid format'],
+        },
       );
       expect(e.fieldErrors['email'], ['invalid format']);
     });
@@ -33,7 +38,10 @@ void main() {
 
       expect(kind(const AuthenticationError('x')), 'auth');
       expect(kind(const NetworkError('x')), 'net');
-      expect(kind(const RateLimitError('x', retryAfter: Duration.zero)), 'rate');
+      expect(
+        kind(const RateLimitError('x', retryAfter: Duration.zero)),
+        'rate',
+      );
       expect(kind(const ServerError('x')), 'server');
       expect(kind(const ValidationError('x', fieldErrors: {})), 'validation');
       expect(kind(const ConnectionLostError('x')), 'conn_lost');

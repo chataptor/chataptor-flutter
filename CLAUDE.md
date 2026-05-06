@@ -178,10 +178,9 @@ Read in this order:
 
 ### Executing the plan
 
-The plan ends with an execution-mode choice. Two supported options — let the user pick before dispatching any work:
+**Always use inline execution** (`superpowers:executing-plans`). Do NOT dispatch subagents — they multiply token cost unnecessarily. Execute each task directly in the same session: write failing test → run → implement → run → commit.
 
-- **Subagent-driven** (recommended by `superpowers:writing-plans`) — dispatch a fresh subagent per task via `superpowers:subagent-driven-development`. Fresh context per task, review between tasks.
-- **Inline execution** — `superpowers:executing-plans`, batch with checkpoints.
+**One phase per session.** After the last commit of a phase: update `memory/project_status.md`, then tell the user to `/clear` and start a fresh session for the next phase.
 
 ### When stuck on the `phoenix_socket` layer (Task 18)
 

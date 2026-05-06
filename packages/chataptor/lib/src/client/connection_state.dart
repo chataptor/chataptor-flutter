@@ -2,7 +2,7 @@ import 'package:meta/meta.dart';
 
 /// Why the client disconnected.
 enum DisconnectReason {
-  /// User called [ChataptorClient.disconnect].
+  /// User called `ChataptorClient.disconnect`.
   userRequested,
 
   /// Network-level error (DNS, timeout, TLS).

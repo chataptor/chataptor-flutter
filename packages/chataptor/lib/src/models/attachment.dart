@@ -1,7 +1,7 @@
 import 'package:chataptor/src/models/enums.dart';
 import 'package:meta/meta.dart';
 
-/// A file attached to a [Message].
+/// A file attached to a `Message`.
 @immutable
 class Attachment {
   /// Creates an [Attachment].
