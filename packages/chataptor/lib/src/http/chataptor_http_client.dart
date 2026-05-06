@@ -18,7 +18,7 @@ abstract interface class ChataptorHttpClient {
 class DefaultChataptorHttpClient implements ChataptorHttpClient {
   /// Creates a [DefaultChataptorHttpClient] wrapping a fresh [http.Client].
   DefaultChataptorHttpClient([http.Client? inner])
-      : _inner = inner ?? http.Client();
+    : _inner = inner ?? http.Client();
 
   final http.Client _inner;
 

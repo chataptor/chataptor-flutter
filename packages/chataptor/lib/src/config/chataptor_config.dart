@@ -1,8 +1,8 @@
 import 'package:chataptor/src/auth/customer_identity.dart';
 import 'package:chataptor/src/config/feature_toggles.dart';
 import 'package:chataptor/src/config/push_config.dart';
-import 'package:chataptor/src/config/transport_config.dart';
 import 'package:chataptor/src/config/translation_config.dart';
+import 'package:chataptor/src/config/transport_config.dart';
 import 'package:chataptor/src/errors/chataptor_error.dart';
 import 'package:chataptor/src/hooks/chataptor_hooks.dart';
 import 'package:chataptor/src/http/chataptor_http_client.dart';
@@ -10,7 +10,7 @@ import 'package:chataptor/src/logger/chataptor_logger.dart';
 import 'package:chataptor/src/storage/chataptor_storage.dart';
 import 'package:meta/meta.dart';
 
-/// Root configuration for [ChataptorClient].
+/// Root configuration for `ChataptorClient`.
 ///
 /// See the design spec (docs/specs/2026-04-22-flutter-sdk-design.md §6.1)
 /// for the three intended onboarding tiers (quickstart / identified /
@@ -34,9 +34,9 @@ class ChataptorConfig {
     this.storage,
     this.httpClient,
     this.logger = const NoOpChataptorLogger(),
-  })  : apiUrl = apiUrl ?? Uri.parse('https://api.chataptor.com'),
-        translation = translation ?? TranslationConfig.auto(),
-        push = push ?? PushConfig.disabled() {
+  }) : apiUrl = apiUrl ?? Uri.parse('https://api.chataptor.com'),
+       translation = translation ?? TranslationConfig.auto(),
+       push = push ?? PushConfig.disabled() {
     if (siteId.isEmpty) {
       throw ChataptorConfigurationError('siteId must not be empty');
     }

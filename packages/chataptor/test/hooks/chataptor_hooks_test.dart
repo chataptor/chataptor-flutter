@@ -8,15 +8,15 @@ import 'package:chataptor/src/models/message_draft.dart';
 import 'package:test/test.dart';
 
 Message _sampleMessage() => Message(
-      id: 'm1',
-      conversationId: 'c1',
-      body: 'hi',
-      author: MessageAuthor.agent,
-      timestamp: DateTime.utc(2026),
-      type: MessageType.text,
-      deliveryChannel: DeliveryChannel.websocket,
-      status: MessageStatus.sent,
-    );
+  id: 'm1',
+  conversationId: 'c1',
+  body: 'hi',
+  author: MessageAuthor.agent,
+  timestamp: DateTime.utc(2026),
+  type: MessageType.text,
+  deliveryChannel: DeliveryChannel.websocket,
+  status: MessageStatus.sent,
+);
 
 void main() {
   test('default ChataptorHooks has no callbacks', () {

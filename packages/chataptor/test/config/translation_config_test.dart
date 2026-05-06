@@ -8,11 +8,14 @@ void main() {
     expect(config.customerLanguage, 'pl');
   });
 
-  test('TranslationConfig.auto without language uses null (runtime detect)', () {
-    final config = TranslationConfig.auto();
-    expect(config.enabled, isTrue);
-    expect(config.customerLanguage, isNull);
-  });
+  test(
+    'TranslationConfig.auto without language uses null (runtime detect)',
+    () {
+      final config = TranslationConfig.auto();
+      expect(config.enabled, isTrue);
+      expect(config.customerLanguage, isNull);
+    },
+  );
 
   test('TranslationConfig.disabled is disabled', () {
     final config = TranslationConfig.disabled();

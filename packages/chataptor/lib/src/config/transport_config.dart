@@ -34,11 +34,8 @@ class ReconnectionPolicy {
   }) {
     final delays = <Duration>[];
     for (var i = 0; i < maxAttempts; i++) {
-      final ms =
-          (initialDelay.inMilliseconds * math.pow(factor, i)).toInt();
-      delays.add(
-        Duration(milliseconds: math.min(ms, maxDelay.inMilliseconds)),
-      );
+      final ms = (initialDelay.inMilliseconds * math.pow(factor, i)).toInt();
+      delays.add(Duration(milliseconds: math.min(ms, maxDelay.inMilliseconds)));
     }
     return ReconnectionPolicy(delays);
   }
@@ -47,7 +44,7 @@ class ReconnectionPolicy {
   final List<Duration> delays;
 }
 
-/// Transport-layer configuration exposed via [ChataptorConfig].
+/// Transport-layer configuration exposed via `ChataptorConfig`.
 @immutable
 class TransportClientConfig {
   /// Creates a [TransportClientConfig] with sensible defaults.

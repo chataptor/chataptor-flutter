@@ -13,7 +13,6 @@ void main() {
     final policy = ReconnectionPolicy.exponentialBackoff(
       initialDelay: const Duration(milliseconds: 100),
       maxDelay: const Duration(seconds: 10),
-      factor: 2,
       maxAttempts: 5,
     );
     final delays = policy.delays;

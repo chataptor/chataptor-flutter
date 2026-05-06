@@ -6,7 +6,7 @@ import 'package:chataptor/src/models/message_draft.dart';
 import 'package:meta/meta.dart';
 
 /// Collection of optional callbacks and interceptors merchants pass in
-/// [ChataptorConfig].
+/// `ChataptorConfig`.
 ///
 /// - **Event callbacks** (`onMessageReceived`, `onUnreadCountChanged`, ...)
 ///   fire with the new value and are fire-and-forget. Use for imperative
@@ -34,7 +34,7 @@ class ChataptorHooks {
   /// Called after every customer message that was successfully sent.
   final void Function(Message)? onMessageSent;
 
-  /// Called when a send attempt failed and surfaced a [SendFailure].
+  /// Called when a send attempt failed and surfaced a `SendFailure`.
   final void Function(ChataptorError)? onMessageFailed;
 
   /// Called when an agent is (re)assigned to the conversation.

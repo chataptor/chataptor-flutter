@@ -38,6 +38,7 @@ class ChataptorLogEntry {
 
 /// Port abstraction over logging. Merchants implement this to forward SDK
 /// logs into Sentry, AppSignal, `dart:developer`, etc.
+// ignore: one_member_abstracts
 abstract interface class ChataptorLogger {
   /// Writes a single log entry.
   void log(

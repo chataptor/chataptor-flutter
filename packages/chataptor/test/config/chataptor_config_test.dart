@@ -3,25 +3,18 @@ import 'package:chataptor/src/config/chataptor_config.dart';
 import 'package:chataptor/src/config/feature_toggles.dart';
 import 'package:chataptor/src/config/push_config.dart';
 import 'package:chataptor/src/config/transport_config.dart';
-import 'package:chataptor/src/config/translation_config.dart';
 import 'package:chataptor/src/hooks/chataptor_hooks.dart';
 import 'package:test/test.dart';
 
 void main() {
   test('ChataptorConfig requires siteId and widgetKey', () {
-    final config = ChataptorConfig(
-      siteId: 'abc',
-      widgetKey: 'pk_x',
-    );
+    final config = ChataptorConfig(siteId: 'abc', widgetKey: 'pk_x');
     expect(config.siteId, 'abc');
     expect(config.widgetKey, 'pk_x');
   });
 
   test('ChataptorConfig sensible defaults', () {
-    final config = ChataptorConfig(
-      siteId: 'abc',
-      widgetKey: 'pk_x',
-    );
+    final config = ChataptorConfig(siteId: 'abc', widgetKey: 'pk_x');
     expect(config.apiUrl, Uri.parse('https://api.chataptor.com'));
     expect(config.customer, const CustomerIdentity.anonymous());
     expect(config.transport, const TransportClientConfig());

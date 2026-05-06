@@ -6,7 +6,7 @@ import 'package:meta/meta.dart';
 /// Attachments are a v0.4.0 feature — in v0.1.0 the composer does not
 /// expose a picker and the backend upload wiring is not implemented. The
 /// default is therefore `enabled: false`; the type exists ahead of its
-/// features so [ChataptorConfig] does not have to change shape when
+/// features so `ChataptorConfig` does not have to change shape when
 /// attachments land.
 @immutable
 class AttachmentConfig {
@@ -16,10 +16,7 @@ class AttachmentConfig {
   const AttachmentConfig({
     this.enabled = false,
     this.maxSizeMB = 10,
-    this.allowedTypes = const {
-      AttachmentType.image,
-      AttachmentType.document,
-    },
+    this.allowedTypes = const {AttachmentType.image, AttachmentType.document},
   });
 
   /// Whether the composer exposes an attachment picker. Honoured from
