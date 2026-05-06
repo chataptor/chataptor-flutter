@@ -73,7 +73,8 @@ class FakeChatTransport implements ChatTransport {
   }
 
   final _eventsController = StreamController<TransportEvent>.broadcast();
-  final _stateController = StreamController<TransportConnectionState>.broadcast();
+  final _stateController =
+      StreamController<TransportConnectionState>.broadcast();
   final Map<String, List<PushResult>> _replyQueue = {};
 
   /// Event injection API.
@@ -98,8 +99,7 @@ class FakeChatTransport implements ChatTransport {
 
   @override
   Future<void> disconnect() async {
-    _stateController
-        .add(const TransportDisconnected(reason: 'user requested'));
+    _stateController.add(const TransportDisconnected(reason: 'user requested'));
   }
 
   @override

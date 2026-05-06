@@ -46,21 +46,26 @@ void main() {
       expect(received.first, isA<MessageReceived>());
     });
 
-    test('push returns injected PushResult for matching (topic, event)', () async {
-      final transport = FakeChatTransport();
-      await transport.connect(_stubConfig());
-      await transport.joinChannel('site:abc', {});
+    test(
+      'push returns injected PushResult for matching (topic, event)',
+      () async {
+        final transport = FakeChatTransport();
+        await transport.connect(_stubConfig());
+        await transport.joinChannel('site:abc', {});
 
-      transport.inject.replyFor(
-        topic: 'site:abc',
-        event: 'message:send',
-        result: const PushOk({'msg_id': 1}),
-      );
+        transport.inject.replyFor(
+          topic: 'site:abc',
+          event: 'message:send',
+          result: const PushOk({'msg_id': 1}),
+        );
 
-      final result = await transport.push('site:abc', 'message:send', {'body': 'hi'});
-      expect(result, isA<PushOk>());
-      expect((result as PushOk).response['msg_id'], 1);
-    });
+        final result = await transport.push('site:abc', 'message:send', {
+          'body': 'hi',
+        });
+        expect(result, isA<PushOk>());
+        expect((result as PushOk).response['msg_id'], 1);
+      },
+    );
 
     test('push returns PushTimeout if no reply is injected', () async {
       final transport = FakeChatTransport();

@@ -1,6 +1,6 @@
 import 'package:meta/meta.dart';
 
-/// Internal configuration passed to a [ChatTransport] on connect.
+/// Internal configuration passed to a `ChatTransport` on connect.
 ///
 /// Not exposed through the public SDK API — callers configure the client
 /// via `ChataptorConfig`, and the client translates that into a
@@ -31,7 +31,7 @@ class TransportConfig {
 }
 
 /// Lifecycle state of the transport itself — a lower-level view of the
-/// connection than the SDK's public [ConnectionState].
+/// connection than the SDK's public `ConnectionState`.
 @immutable
 sealed class TransportConnectionState {
   const TransportConnectionState();

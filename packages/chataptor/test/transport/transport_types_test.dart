@@ -6,7 +6,7 @@ void main() {
     test('carries url, params, heartbeat, reconnection policy', () {
       final config = TransportConfig(
         url: Uri.parse('wss://example.com/socket/websocket'),
-        params: {'widgetKey': 'pk_x', 'siteId': 'abc'},
+        params: const {'widgetKey': 'pk_x', 'siteId': 'abc'},
         heartbeatInterval: const Duration(seconds: 30),
         reconnectionDelays: const [
           Duration(seconds: 1),
@@ -32,10 +32,18 @@ void main() {
       expect(kind(const TransportConnecting()), 'connecting');
       expect(kind(const TransportConnected()), 'connected');
       expect(
-        kind(const TransportReconnecting(attemptNumber: 1, nextAttemptIn: Duration(seconds: 1))),
+        kind(
+          const TransportReconnecting(
+            attemptNumber: 1,
+            nextAttemptIn: Duration(seconds: 1),
+          ),
+        ),
         'reconnecting',
       );
-      expect(kind(const TransportDisconnected(reason: 'closed')), 'disconnected');
+      expect(
+        kind(const TransportDisconnected(reason: 'closed')),
+        'disconnected',
+      );
     });
   });
 

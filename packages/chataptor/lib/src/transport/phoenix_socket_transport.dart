@@ -102,9 +102,7 @@ class PhoenixSocketTransport implements ChatTransport {
     socket.close();
     _socket = null;
 
-    _stateController.add(
-      const TransportDisconnected(reason: 'user requested'),
-    );
+    _stateController.add(const TransportDisconnected(reason: 'user requested'));
   }
 
   @override
@@ -114,10 +112,7 @@ class PhoenixSocketTransport implements ChatTransport {
 
     // addChannel returns an existing channel if the topic was added before;
     // since we guard with containsKey, this is always a fresh channel here.
-    final channel = socket.addChannel(
-      topic: topic,
-      parameters: params,
-    );
+    final channel = socket.addChannel(topic: topic, parameters: params);
     _channels[topic] = channel;
 
     // Route all server-pushed events through our events stream.
@@ -175,10 +170,7 @@ class PhoenixSocketTransport implements ChatTransport {
     } on phx.ChannelTimeoutException {
       return const PushTimeout();
     } catch (err) {
-      return PushServerError(
-        reason: err.toString(),
-        response: const {},
-      );
+      return PushServerError(reason: err.toString(), response: const {});
     }
   }
 
