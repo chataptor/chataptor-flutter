@@ -1,0 +1,239 @@
+import 'dart:async';
+
+import 'package:chataptor/src/auth/guest_id_store.dart';
+import 'package:chataptor/src/client/connection_state.dart';
+import 'package:chataptor/src/client/send_result.dart';
+import 'package:chataptor/src/config/chataptor_config.dart';
+import 'package:chataptor/src/errors/chataptor_error.dart';
+import 'package:chataptor/src/logger/chataptor_logger.dart';
+import 'package:chataptor/src/models/agent_info.dart';
+import 'package:chataptor/src/models/message.dart';
+import 'package:chataptor/src/storage/chataptor_storage.dart';
+import 'package:chataptor/src/storage/in_memory_storage.dart';
+import 'package:chataptor/src/streams/value_stream.dart';
+import 'package:chataptor/src/transport/chat_transport.dart';
+import 'package:chataptor/src/transport/phoenix_socket_transport.dart';
+import 'package:chataptor/src/transport/transport_types.dart';
+
+/// Core SDK client. Orchestrates the transport, state streams, and business
+/// logic that the Flutter layer and merchants consume.
+///
+/// Typical construction goes through `Chataptor.init` in
+/// `package:chataptor_flutter`. Direct instantiation is supported for
+/// multi-instance scenarios or tests (via [ChataptorClient.internal]).
+class ChataptorClient {
+  /// Creates a [ChataptorClient] using defaults. For tests and advanced
+  /// use-cases, prefer [ChataptorClient.internal] which accepts a custom
+  /// [ChatTransport].
+  ChataptorClient({required ChataptorConfig config})
+      : this.internal(
+          config: config,
+          transport: PhoenixSocketTransport(),
+        );
+
+  /// Internal / test entry point that lets callers inject a transport.
+  ChataptorClient.internal({
+    required this.config,
+    required ChatTransport transport,
+    ChataptorStorage? storage,
+  })  : _transport = transport,
+        _storage = storage ?? config.storage ?? InMemoryChataptorStorage(),
+        _guestIdStore = GuestIdStore(
+          storage: storage ?? config.storage ?? InMemoryChataptorStorage(),
+          siteId: config.siteId,
+        ) {
+    _connectionState.add(
+      const Disconnected(DisconnectReason.userRequested),
+    );
+    _transport.connectionState.listen(_handleTransportState);
+    _transport.events.listen(_handleTransportEvent);
+  }
+
+  /// The active configuration.
+  final ChataptorConfig config;
+
+  final ChatTransport _transport;
+  final ChataptorStorage _storage;
+  final GuestIdStore _guestIdStore;
+
+  final ValueStream<ConnectionState> _connectionState =
+      ValueStream<ConnectionState>();
+  final StreamController<Message> _messages =
+      StreamController<Message>.broadcast();
+  final StreamController<ChataptorError> _errors =
+      StreamController<ChataptorError>.broadcast();
+
+  bool _disposed = false;
+  String _siteTopic() => 'site:${config.siteId}';
+
+  /// Stream of connection state updates.
+  Stream<ConnectionState> get connectionState => _connectionState.stream;
+
+  /// Synchronous read of the current connection state.
+  ConnectionState? get currentConnectionState => _connectionState.value;
+
+  /// Stream of incoming messages (agent → customer) and locally sent
+  /// messages (customer → agent) — the Flutter layer uses this to drive the
+  /// message list.
+  Stream<Message> get messages => _messages.stream;
+
+  /// Stream of non-fatal errors emitted by the client.
+  Stream<ChataptorError> get errors => _errors.stream;
+
+  /// Opens the WebSocket and joins the site channel. Idempotent.
+  Future<void> connect() async {
+    _requireNotDisposed();
+    if (currentConnectionState is Connected) return;
+    _connectionState.add(const Connecting());
+
+    final transportConfig = TransportConfig(
+      url: _socketUrl(),
+      params: await _buildSocketParams(),
+      heartbeatInterval: config.transport.heartbeatInterval,
+      reconnectionDelays: config.transport.reconnection.delays,
+    );
+
+    try {
+      await _transport.connect(transportConfig);
+      await _transport.joinChannel(_siteTopic(), {});
+    } on Object catch (err, st) {
+      config.logger.log(
+        ChataptorLogLevel.error,
+        'connect failed',
+        error: err,
+        stackTrace: st,
+      );
+      final chataptorErr = NetworkError(
+        'connect failed: $err',
+        underlyingException: err,
+        stackTrace: st,
+      );
+      _errors.add(chataptorErr);
+      config.hooks.onError?.call(chataptorErr);
+      _connectionState.add(
+        const Disconnected(DisconnectReason.networkError),
+      );
+      rethrow;
+    }
+  }
+
+  /// Closes the WebSocket. Idempotent.
+  Future<void> disconnect() async {
+    if (_disposed) return;
+    await _transport.disconnect();
+    _connectionState.add(
+      const Disconnected(DisconnectReason.userRequested),
+    );
+  }
+
+  /// Sends a text message. Stub for Task 28.
+  Future<SendResult> sendMessage(
+    String text, {
+    Map<String, dynamic>? metadata,
+  }) async {
+    _requireNotDisposed();
+    _requireConnected();
+    throw UnimplementedError('sendMessage implemented in Task 28');
+  }
+
+  /// Releases every resource. After [dispose] the client is unusable.
+  Future<void> dispose() async {
+    if (_disposed) return;
+    _disposed = true;
+    await _transport.dispose();
+    await _connectionState.close();
+    await _messages.close();
+    await _errors.close();
+  }
+
+  Uri _socketUrl() {
+    final scheme = config.apiUrl.scheme == 'https' ? 'wss' : 'ws';
+    return config.apiUrl.replace(
+      scheme: scheme,
+      path: '${config.apiUrl.path}/socket/websocket',
+    );
+  }
+
+  Future<Map<String, dynamic>> _buildSocketParams() async {
+    final params = <String, dynamic>{
+      'widgetKey': config.widgetKey,
+      'siteId': config.siteId,
+      'platform': 'flutter',
+    };
+
+    final customer = config.customer;
+    if (customer.isAnonymous) {
+      params['guestId'] = await _guestIdStore.getOrCreate();
+    } else {
+      if (customer.id != null) params['customerId'] = customer.id;
+      if (customer.email != null) params['customerEmail'] = customer.email;
+      if (customer.name != null) params['customerName'] = customer.name;
+      if (customer.verificationHash != null) {
+        params['customerData'] = {
+          'hash': customer.verificationHash,
+          if (customer.email != null) 'email': customer.email,
+          ...customer.customData,
+        };
+      }
+    }
+
+    if (config.translation.enabled &&
+        config.translation.customerLanguage != null) {
+      params['browserLanguage'] = config.translation.customerLanguage;
+    }
+    return params;
+  }
+
+  void _handleTransportState(TransportConnectionState state) {
+    final mapped = switch (state) {
+      TransportConnecting() => const Connecting(),
+      TransportConnected() => const Connected(),
+      TransportReconnecting() => Reconnecting(
+          attemptNumber: (state as TransportReconnecting).attemptNumber,
+          nextAttemptIn: state.nextAttemptIn,
+        ),
+      TransportDisconnected() => const Disconnected(
+          DisconnectReason.networkError,
+        ),
+    };
+    _connectionState.add(mapped);
+    config.hooks.onConnectionStateChanged?.call(mapped);
+  }
+
+  void _handleTransportEvent(TransportEvent event) {
+    switch (event) {
+      case MessageReceived():
+        unawaited(_handleMessageReceived(event));
+      case ChannelClosed():
+        // Propagate as reconnecting — transport will also emit state.
+        break;
+      case ChannelError(:final message):
+        _errors.add(NetworkError(message));
+    }
+  }
+
+  /// Stub — full implementation in Task 29.
+  Future<void> _handleMessageReceived(MessageReceived event) async {
+    // Parsing implemented in Task 29.
+  }
+
+  void _requireNotDisposed() {
+    if (_disposed) {
+      throw ChataptorStateError('ChataptorClient was disposed');
+    }
+  }
+
+  void _requireConnected() {
+    if (currentConnectionState is! Connected) {
+      throw ChataptorStateError(
+        'ChataptorClient is not connected — call connect() first',
+      );
+    }
+  }
+
+  /// Exposed for internal testing only.
+  AgentInfo? get debugAgent => null;
+
+  /// Exposed for internal testing only.
+  ChataptorStorage get debugStorage => _storage;
+}
