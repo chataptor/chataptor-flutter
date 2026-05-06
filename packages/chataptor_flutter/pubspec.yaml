@@ -18,7 +18,7 @@ environment:
 resolution: workspace
 
 dependencies:
-  chataptor: ^0.1.0
+  chataptor: ^0.1.0-dev
   flutter:
     sdk: flutter
   flutter_localizations:
