@@ -9,15 +9,16 @@ import 'package:chataptor/src/models/message.dart';
 /// responses.
 Message parseIncomingMessage(Map<String, dynamic> payload) {
   final id = (payload['msg_id'] ?? payload['id'] ?? '').toString();
-  final convId =
-      (payload['conv_id'] ?? payload['conversation_id'] ?? '').toString();
+  final convId = (payload['conv_id'] ?? payload['conversation_id'] ?? '')
+      .toString();
   final body = (payload['body_src'] ?? payload['body'] ?? '').toString();
   final bodyTranslated = payload['body_translated'] as String?;
   final sourceLanguage = payload['source_language'] as String?;
   final targetLanguage = payload['target_language'] as String?;
   final author = _parseAuthor(payload['author']);
-  final timestamp =
-      _parseTimestamp(payload['inserted_at'] ?? payload['timestamp']);
+  final timestamp = _parseTimestamp(
+    payload['inserted_at'] ?? payload['timestamp'],
+  );
   final channel = _parseChannel(payload['delivery_channel']);
 
   return Message(

@@ -62,8 +62,9 @@ class FakeChataptorClient implements ChataptorClient {
   /// Creates a [FakeChataptorClient] in [initialConnectionState] (defaults
   /// to `Disconnected(userRequested)`), optionally with an [initialAgent].
   FakeChataptorClient({
-    ConnectionState initialConnectionState =
-        const Disconnected(DisconnectReason.userRequested),
+    ConnectionState initialConnectionState = const Disconnected(
+      DisconnectReason.userRequested,
+    ),
     AgentInfo? initialAgent,
   }) {
     _currentConnectionState = initialConnectionState;
@@ -112,9 +113,7 @@ class FakeChataptorClient implements ChataptorClient {
   @override
   Future<void> disconnect() async {
     recorded.disconnectCalls += 1;
-    inject.connectionState(
-      const Disconnected(DisconnectReason.userRequested),
-    );
+    inject.connectionState(const Disconnected(DisconnectReason.userRequested));
   }
 
   @override

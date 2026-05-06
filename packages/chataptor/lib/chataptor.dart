@@ -17,8 +17,8 @@ export 'src/client/send_result.dart';
 export 'src/config/chataptor_config.dart';
 export 'src/config/feature_toggles.dart';
 export 'src/config/push_config.dart';
-export 'src/config/transport_config.dart';
 export 'src/config/translation_config.dart';
+export 'src/config/transport_config.dart';
 
 // Errors
 export 'src/errors/chataptor_error.dart';
@@ -31,7 +31,7 @@ export 'src/http/chataptor_http_client.dart';
 
 // Logger
 export 'src/logger/chataptor_logger.dart'
-    show ChataptorLogger, ChataptorLogLevel, NoOpChataptorLogger;
+    show ChataptorLogLevel, ChataptorLogger, NoOpChataptorLogger;
 
 // Models
 export 'src/models/agent_info.dart';

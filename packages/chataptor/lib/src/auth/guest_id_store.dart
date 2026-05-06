@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:chataptor/src/storage/chataptor_storage.dart';
 
 /// Manages the device-stable anonymous guest ID used when the customer has
-/// not provided an identified [CustomerIdentity].
+/// not provided an identified `CustomerIdentity`.
 ///
 /// The guest ID is scoped per [siteId] so two shops on the same device do
 /// not share a conversation history.
@@ -36,9 +36,7 @@ class GuestIdStore {
   String _generate() {
     final rand = Random.secure();
     final bytes = List<int>.generate(16, (_) => rand.nextInt(256));
-    final hex = bytes
-        .map((b) => b.toRadixString(16).padLeft(2, '0'))
-        .join();
+    final hex = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
     return 'guest-$hex';
   }
 }

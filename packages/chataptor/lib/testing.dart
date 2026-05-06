@@ -6,6 +6,10 @@
 /// lives in `package:chataptor/chataptor.dart` as `ChatTransport`.
 library chataptor.testing;
 
+// Convenience in-memory adapters for `ChataptorStorage` and `ChataptorLogger`.
+export 'src/logger/chataptor_logger.dart' show RecordingChataptorLogger;
+export 'src/storage/in_memory_storage.dart';
+
 // Merchant-facing: high-level fake for widget tests of the host app.
 export 'src/testing/fake_chataptor_client.dart';
 
@@ -16,22 +20,18 @@ export 'src/transport/fake_chat_transport.dart';
 // the transport layer. Public-from-tests-only.
 export 'src/transport/transport_types.dart'
     show
-        TransportConfig,
-        TransportEvent,
-        MessageReceived,
         ChannelClosed,
         ChannelError,
-        TransportConnectionState,
-        TransportConnecting,
-        TransportConnected,
-        TransportReconnecting,
-        TransportDisconnected,
-        PushResult,
+        MessageReceived,
+        PushDisconnected,
         PushOk,
+        PushResult,
         PushServerError,
         PushTimeout,
-        PushDisconnected;
-
-// Convenience in-memory adapters for `ChataptorStorage` and `ChataptorLogger`.
-export 'src/storage/in_memory_storage.dart';
-export 'src/logger/chataptor_logger.dart' show RecordingChataptorLogger;
+        TransportConfig,
+        TransportConnected,
+        TransportConnecting,
+        TransportConnectionState,
+        TransportDisconnected,
+        TransportEvent,
+        TransportReconnecting;

@@ -35,9 +35,7 @@ void main() {
     });
 
     test('inject.connectionState transitions and emits on stream', () async {
-      final fake = FakeChataptorClient(
-        initialConnectionState: const Disconnected(DisconnectReason.userRequested),
-      );
+      final fake = FakeChataptorClient();
       final states = <ConnectionState>[];
       fake.connectionState.listen(states.add);
 
@@ -49,29 +47,37 @@ void main() {
       expect(fake.currentConnectionState, const Connected());
     });
 
-    test('sendMessage records the call and returns the scripted result', () async {
-      final fake = FakeChataptorClient(initialConnectionState: const Connected());
-      final draft = MessageDraft(body: 'hi');
-      fake.inject.completeNextSend(SendSuccess(draft));
+    test(
+      'sendMessage records the call and returns the scripted result',
+      () async {
+        final fake = FakeChataptorClient(
+          initialConnectionState: const Connected(),
+        );
+        const draft = MessageDraft(body: 'hi');
+        fake.inject.completeNextSend(const SendSuccess(draft));
 
-      final result = await fake.sendMessage('hi');
+        final result = await fake.sendMessage('hi');
 
-      expect(result, isA<SendSuccess>());
-      expect(fake.recorded.sentMessages, hasLength(1));
-      expect(fake.recorded.sentMessages.first.body, 'hi');
-    });
+        expect(result, isA<SendSuccess>());
+        expect(fake.recorded.sentMessages, hasLength(1));
+        expect(fake.recorded.sentMessages.first.body, 'hi');
+      },
+    );
 
-    test('sendMessage returns ValidationError by default (nothing scripted)', () async {
-      final fake = FakeChataptorClient(initialConnectionState: const Connected());
-      final result = await fake.sendMessage('hi');
-      expect(result, isA<SendFailure>());
-      expect((result as SendFailure).error, isA<ValidationError>());
-    });
+    test(
+      'sendMessage returns ValidationError by default (nothing scripted)',
+      () async {
+        final fake = FakeChataptorClient(
+          initialConnectionState: const Connected(),
+        );
+        final result = await fake.sendMessage('hi');
+        expect(result, isA<SendFailure>());
+        expect((result as SendFailure).error, isA<ValidationError>());
+      },
+    );
 
     test('connect/disconnect are no-ops that flip the state', () async {
-      final fake = FakeChataptorClient(
-        initialConnectionState: const Disconnected(DisconnectReason.userRequested),
-      );
+      final fake = FakeChataptorClient();
       await fake.connect();
       expect(fake.currentConnectionState, const Connected());
       await fake.disconnect();

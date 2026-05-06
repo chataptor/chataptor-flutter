@@ -9,8 +9,9 @@ ChataptorConfig _baseConfig({ChataptorHooks? hooks}) => ChataptorConfig(
   hooks: hooks ?? const ChataptorHooks(),
 );
 
-Future<({ChataptorClient client, FakeChatTransport transport})>
-    _connected({ChataptorHooks? hooks}) async {
+Future<({ChataptorClient client, FakeChatTransport transport})> _connected({
+  ChataptorHooks? hooks,
+}) async {
   final transport = FakeChatTransport();
   final client = ChataptorClient.internal(
     config: _baseConfig(hooks: hooks),

@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:chataptor/src/auth/guest_id_store.dart';
 import 'package:chataptor/src/client/connection_state.dart';
+import 'package:chataptor/src/client/message_parser.dart';
 import 'package:chataptor/src/client/send_result.dart';
 import 'package:chataptor/src/config/chataptor_config.dart';
 import 'package:chataptor/src/errors/chataptor_error.dart';
-import 'package:chataptor/src/client/message_parser.dart';
 import 'package:chataptor/src/logger/chataptor_logger.dart';
 import 'package:chataptor/src/models/agent_info.dart';
 import 'package:chataptor/src/models/message.dart';
@@ -28,25 +28,20 @@ class ChataptorClient {
   /// use-cases, prefer [ChataptorClient.internal] which accepts a custom
   /// [ChatTransport].
   ChataptorClient({required ChataptorConfig config})
-      : this.internal(
-          config: config,
-          transport: PhoenixSocketTransport(),
-        );
+    : this.internal(config: config, transport: PhoenixSocketTransport());
 
   /// Internal / test entry point that lets callers inject a transport.
   ChataptorClient.internal({
     required this.config,
     required ChatTransport transport,
     ChataptorStorage? storage,
-  })  : _transport = transport,
-        _storage = storage ?? config.storage ?? InMemoryChataptorStorage(),
-        _guestIdStore = GuestIdStore(
-          storage: storage ?? config.storage ?? InMemoryChataptorStorage(),
-          siteId: config.siteId,
-        ) {
-    _connectionState.add(
-      const Disconnected(DisconnectReason.userRequested),
-    );
+  }) : _transport = transport,
+       _storage = storage ?? config.storage ?? InMemoryChataptorStorage(),
+       _guestIdStore = GuestIdStore(
+         storage: storage ?? config.storage ?? InMemoryChataptorStorage(),
+         siteId: config.siteId,
+       ) {
+    _connectionState.add(const Disconnected(DisconnectReason.userRequested));
     _transport.connectionState.listen(_handleTransportState);
     _transport.events.listen(_handleTransportEvent);
   }
@@ -112,9 +107,7 @@ class ChataptorClient {
       );
       _errors.add(chataptorErr);
       config.hooks.onError?.call(chataptorErr);
-      _connectionState.add(
-        const Disconnected(DisconnectReason.networkError),
-      );
+      _connectionState.add(const Disconnected(DisconnectReason.networkError));
       rethrow;
     }
   }
@@ -123,12 +116,10 @@ class ChataptorClient {
   Future<void> disconnect() async {
     if (_disposed) return;
     await _transport.disconnect();
-    _connectionState.add(
-      const Disconnected(DisconnectReason.userRequested),
-    );
+    _connectionState.add(const Disconnected(DisconnectReason.userRequested));
   }
 
-  /// Sends a text [message]. Runs the `beforeSend` interceptor if set, then
+  /// Sends a text [text]. Runs the `beforeSend` interceptor if set, then
   /// pushes the payload over the transport. Returns a [SendResult]
   /// reflecting the outcome.
   Future<SendResult> sendMessage(
@@ -144,9 +135,9 @@ class ChataptorClient {
     if (beforeSend != null) {
       final modified = await beforeSend(draft);
       if (modified == null) {
-        final err = ValidationError(
+        const err = ValidationError(
           'send cancelled by beforeSend interceptor',
-          fieldErrors: const {},
+          fieldErrors: {},
         );
         config.hooks.onMessageFailed?.call(err);
         return SendFailure(err, draft);
@@ -159,26 +150,19 @@ class ChataptorClient {
       if (draft.metadata.isNotEmpty) 'metadata': draft.metadata,
     };
 
-    final result = await _transport.push(
-      _siteTopic(),
-      'message:send',
-      payload,
-    );
+    final result = await _transport.push(_siteTopic(), 'message:send', payload);
 
     return switch (result) {
       PushOk() => SendSuccess(draft),
       PushServerError(:final reason) => SendFailure(
-          ServerError('server rejected send: $reason'),
-          draft,
-        ),
-      PushTimeout() => SendFailure(
-          const NetworkError('send timed out'),
-          draft,
-        ),
+        ServerError('server rejected send: $reason'),
+        draft,
+      ),
+      PushTimeout() => SendFailure(const NetworkError('send timed out'), draft),
       PushDisconnected() => SendFailure(
-          const ConnectionLostError('disconnected while sending'),
-          draft,
-        ),
+        const ConnectionLostError('disconnected while sending'),
+        draft,
+      ),
     };
   }
 
@@ -234,13 +218,14 @@ class ChataptorClient {
     final mapped = switch (state) {
       TransportConnecting() => const Connecting(),
       TransportConnected() => const Connected(),
-      TransportReconnecting() => Reconnecting(
-          attemptNumber: (state as TransportReconnecting).attemptNumber,
-          nextAttemptIn: state.nextAttemptIn,
+      TransportReconnecting(:final attemptNumber, :final nextAttemptIn) =>
+        Reconnecting(
+          attemptNumber: attemptNumber,
+          nextAttemptIn: nextAttemptIn,
         ),
       TransportDisconnected() => const Disconnected(
-          DisconnectReason.networkError,
-        ),
+        DisconnectReason.networkError,
+      ),
     };
     _connectionState.add(mapped);
     config.hooks.onConnectionStateChanged?.call(mapped);
