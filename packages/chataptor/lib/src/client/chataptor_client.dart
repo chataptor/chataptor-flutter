@@ -5,6 +5,7 @@ import 'package:chataptor/src/client/connection_state.dart';
 import 'package:chataptor/src/client/send_result.dart';
 import 'package:chataptor/src/config/chataptor_config.dart';
 import 'package:chataptor/src/errors/chataptor_error.dart';
+import 'package:chataptor/src/client/message_parser.dart';
 import 'package:chataptor/src/logger/chataptor_logger.dart';
 import 'package:chataptor/src/models/agent_info.dart';
 import 'package:chataptor/src/models/message.dart';
@@ -257,9 +258,19 @@ class ChataptorClient {
     }
   }
 
-  /// Stub — full implementation in Task 29.
   Future<void> _handleMessageReceived(MessageReceived event) async {
-    // Parsing implemented in Task 29.
+    if (event.event != 'message:received') return;
+    var message = parseIncomingMessage(event.payload);
+
+    final beforeReceive = config.hooks.beforeReceive;
+    if (beforeReceive != null) {
+      final modified = await beforeReceive(message);
+      if (modified == null) return;
+      message = modified;
+    }
+
+    _messages.add(message);
+    config.hooks.onMessageReceived?.call(message);
   }
 
   void _requireNotDisposed() {
