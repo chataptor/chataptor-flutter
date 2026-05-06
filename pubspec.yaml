@@ -1,0 +1,30 @@
+name: chataptor_workspace
+publish_to: none
+environment:
+  sdk: ^3.9.0
+
+workspace:
+  - packages/chataptor
+  - packages/chataptor_flutter
+
+dev_dependencies:
+  melos: ^7.0.0
+  very_good_analysis: ^6.0.0
+
+melos:
+  scripts:
+    analyze:
+      run: melos exec -- dart analyze --fatal-infos
+      description: Run `dart analyze` on every package.
+    test:
+      run: melos exec --dir-exists=test -- flutter test
+      description: Run tests in every package that has a `test/` folder.
+    format-check:
+      run: melos exec -- dart format --set-exit-if-changed .
+      description: Verify every package is formatted.
+    format:
+      run: melos exec -- dart format .
+      description: Format every package.
+    pana:
+      run: melos exec -- pana . --no-warning
+      description: Run pub score analyzer on every package.
