@@ -1,0 +1,27 @@
+name: chataptor
+description: Pure-Dart core client for Chataptor — real-time multilingual customer support chat. Headless; pair with chataptor_flutter for widgets.
+version: 0.1.0-dev
+repository: https://github.com/chataptor/chataptor-flutter
+homepage: https://chataptor.com
+issue_tracker: https://github.com/chataptor/chataptor-flutter/issues
+topics:
+  - chat
+  - support
+  - phoenix
+  - realtime
+  - translation
+
+environment:
+  sdk: ^3.9.0
+
+resolution: workspace
+
+dependencies:
+  async: ^2.11.0
+  http: ^1.2.0
+  meta: ^1.12.0
+  phoenix_socket: ^0.8.0
+
+dev_dependencies:
+  mocktail: ^1.0.3
+  test: ^1.25.0
