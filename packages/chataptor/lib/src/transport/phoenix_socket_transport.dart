@@ -78,8 +78,24 @@ class PhoenixSocketTransport implements ChatTransport {
       );
     });
 
-    // connect() in 0.8.0 handles reconnects internally and never throws.
+    // Align post-condition with FakeChatTransport: return only after the first
+    // open or close outcome is known. connect() in 0.8.0 never throws — fire
+    // it first so the socket starts negotiating, then await the outcome.
     unawaited(socket.connect());
+    final completer = Completer<void>();
+    late StreamSubscription<phx.PhoenixSocketOpenEvent> onceOpen;
+    late StreamSubscription<phx.PhoenixSocketCloseEvent> onceClose;
+    onceOpen = socket.openStream.listen((_) {
+      if (!completer.isCompleted) completer.complete();
+      onceOpen.cancel();
+      onceClose.cancel();
+    });
+    onceClose = socket.closeStream.listen((_) {
+      if (!completer.isCompleted) completer.complete();
+      onceOpen.cancel();
+      onceClose.cancel();
+    });
+    await completer.future;
   }
 
   @override
