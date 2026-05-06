@@ -8,6 +8,7 @@ import 'package:chataptor/src/errors/chataptor_error.dart';
 import 'package:chataptor/src/logger/chataptor_logger.dart';
 import 'package:chataptor/src/models/agent_info.dart';
 import 'package:chataptor/src/models/message.dart';
+import 'package:chataptor/src/models/message_draft.dart';
 import 'package:chataptor/src/storage/chataptor_storage.dart';
 import 'package:chataptor/src/storage/in_memory_storage.dart';
 import 'package:chataptor/src/streams/value_stream.dart';
@@ -126,14 +127,58 @@ class ChataptorClient {
     );
   }
 
-  /// Sends a text message. Stub for Task 28.
+  /// Sends a text [message]. Runs the `beforeSend` interceptor if set, then
+  /// pushes the payload over the transport. Returns a [SendResult]
+  /// reflecting the outcome.
   Future<SendResult> sendMessage(
     String text, {
     Map<String, dynamic>? metadata,
   }) async {
     _requireNotDisposed();
     _requireConnected();
-    throw UnimplementedError('sendMessage implemented in Task 28');
+
+    var draft = MessageDraft(body: text, metadata: metadata ?? const {});
+
+    final beforeSend = config.hooks.beforeSend;
+    if (beforeSend != null) {
+      final modified = await beforeSend(draft);
+      if (modified == null) {
+        final err = ValidationError(
+          'send cancelled by beforeSend interceptor',
+          fieldErrors: const {},
+        );
+        config.hooks.onMessageFailed?.call(err);
+        return SendFailure(err, draft);
+      }
+      draft = modified;
+    }
+
+    final payload = <String, dynamic>{
+      'body': draft.body,
+      if (draft.metadata.isNotEmpty) 'metadata': draft.metadata,
+    };
+
+    final result = await _transport.push(
+      _siteTopic(),
+      'message:send',
+      payload,
+    );
+
+    return switch (result) {
+      PushOk() => SendSuccess(draft),
+      PushServerError(:final reason) => SendFailure(
+          ServerError('server rejected send: $reason'),
+          draft,
+        ),
+      PushTimeout() => SendFailure(
+          const NetworkError('send timed out'),
+          draft,
+        ),
+      PushDisconnected() => SendFailure(
+          const ConnectionLostError('disconnected while sending'),
+          draft,
+        ),
+    };
   }
 
   /// Releases every resource. After [dispose] the client is unusable.
