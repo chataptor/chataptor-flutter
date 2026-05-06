@@ -180,7 +180,18 @@ Read in this order:
 
 **Always use inline execution** (`superpowers:executing-plans`). Do NOT dispatch subagents — they multiply token cost unnecessarily. Execute each task directly in the same session: write failing test → run → implement → run → commit.
 
-**One phase per session.** After the last commit of a phase: update `memory/project_status.md`, then tell the user to `/clear` and start a fresh session for the next phase.
+**One phase per session.** After the last commit of a phase, run the phase completion gate before updating memory.
+
+### Phase completion gate
+
+After the last task commit of every phase — **mandatory, no exceptions**:
+
+1. `melos run analyze` — must exit clean (zero issues).
+2. `melos run format-check` — must exit clean; if it fails run `melos run format` then re-check.
+3. `melos run test` — full suite green.
+4. Call `advisor()` — independent review of what the phase actually produced vs. plan/spec. Address any blockers before closing the phase.
+5. Update `memory/project_status.md` to reflect the phase as complete.
+6. Tell the user to `/clear` and start a fresh session for the next phase.
 
 ### When stuck on the `phoenix_socket` layer (Task 18)
 
@@ -219,4 +230,4 @@ Code, identifiers, commit messages, dartdoc, pub.dev descriptions, READMEs, guid
 
 ## Last updated
 
-2026-04-22 — initial CLAUDE.md, written alongside the design spec and implementation plan as the project transitions from planning to implementation.
+2026-05-06 — added phase completion gate (analyze + format-check + test + advisor) to workflow.
