@@ -1,4 +1,3 @@
-import 'package:chataptor/chataptor.dart';
 import 'package:chataptor_flutter/chataptor_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,20 +6,19 @@ Message _message({
   MessageAuthor author = MessageAuthor.customer,
   String body = 'hi',
   String? translated,
-}) =>
-    Message(
-      id: 'm1',
-      conversationId: 'c1',
-      body: body,
-      bodyTranslated: translated,
-      sourceLanguage: translated != null ? 'en' : null,
-      targetLanguage: translated != null ? 'pl' : null,
-      author: author,
-      timestamp: DateTime.utc(2026),
-      type: MessageType.text,
-      deliveryChannel: DeliveryChannel.websocket,
-      status: MessageStatus.sent,
-    );
+}) => Message(
+  id: 'm1',
+  conversationId: 'c1',
+  body: body,
+  bodyTranslated: translated,
+  sourceLanguage: translated != null ? 'en' : null,
+  targetLanguage: translated != null ? 'pl' : null,
+  author: author,
+  timestamp: DateTime.utc(2026),
+  type: MessageType.text,
+  deliveryChannel: DeliveryChannel.websocket,
+  status: MessageStatus.sent,
+);
 
 void main() {
   testWidgets('renders body text', (tester) async {
@@ -34,8 +32,9 @@ void main() {
     expect(find.text('hello'), findsOneWidget);
   });
 
-  testWidgets('customer and agent bubbles render with different colors',
-      (tester) async {
+  testWidgets('customer and agent bubbles render with different colors', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -57,8 +56,9 @@ void main() {
     expect(containers.length >= 2, isTrue);
   });
 
-  testWidgets('renders translation label when translation present',
-      (tester) async {
+  testWidgets('renders translation label when translation present', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(

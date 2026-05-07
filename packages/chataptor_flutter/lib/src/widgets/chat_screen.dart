@@ -78,10 +78,7 @@ class _ChataptorChatScreenState extends State<ChataptorChatScreen> {
       body: Column(
         children: [
           Expanded(
-            child: ChataptorMessageList(
-              messages: _messages,
-              theme: theme,
-            ),
+            child: ChataptorMessageList(messages: _messages, theme: theme),
           ),
           ChataptorComposer(
             theme: theme,

@@ -9,11 +9,7 @@ typedef ChataptorComposerSend = Future<void> Function(String text);
 /// call; parent owns the networking via [onSend].
 class ChataptorComposer extends StatefulWidget {
   /// Creates a [ChataptorComposer].
-  const ChataptorComposer({
-    super.key,
-    required this.onSend,
-    this.theme,
-  });
+  const ChataptorComposer({required this.onSend, super.key, this.theme});
 
   /// Called when the user taps send on non-empty text.
   final ChataptorComposerSend onSend;

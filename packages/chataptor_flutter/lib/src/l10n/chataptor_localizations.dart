@@ -64,10 +64,7 @@ class ChataptorLocalizations {
   );
 
   /// Locales supported out of the box in v0.1.0.
-  static const List<Locale> supportedLocales = [
-    Locale('en'),
-    Locale('pl'),
-  ];
+  static const List<Locale> supportedLocales = [Locale('en'), Locale('pl')];
 
   /// Placeholder in composer input field.
   final String typeMessage;
@@ -172,9 +169,8 @@ class _ChataptorLocalizationsDelegate
   const _ChataptorLocalizationsDelegate();
 
   @override
-  bool isSupported(Locale locale) =>
-      ChataptorLocalizations.supportedLocales
-          .any((l) => l.languageCode == locale.languageCode);
+  bool isSupported(Locale locale) => ChataptorLocalizations.supportedLocales
+      .any((l) => l.languageCode == locale.languageCode);
 
   @override
   Future<ChataptorLocalizations> load(Locale locale) async {

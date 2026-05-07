@@ -1,4 +1,3 @@
-import 'package:chataptor/chataptor.dart';
 import 'package:chataptor/testing.dart';
 import 'package:chataptor_flutter/chataptor_flutter.dart';
 import 'package:flutter/material.dart';
@@ -52,67 +51,52 @@ void main() {
     expect(find.text('ciao'), findsOneWidget);
   });
 
-  testWidgets(
-    'lazy mode (default) disconnects the client on dispose',
-    (tester) async {
-      final transport = FakeChatTransport();
-      await Chataptor.init(
+  testWidgets('lazy mode (default) disconnects the client on dispose', (
+    tester,
+  ) async {
+    final transport = FakeChatTransport();
+    await Chataptor.init(
+      siteId: 'abc',
+      widgetKey: 'pk_x',
+      apiUrl: Uri.parse('http://localhost:4000'),
+      transport: transport,
+    );
+
+    await tester.pumpWidget(const MaterialApp(home: ChataptorChatScreen()));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(Chataptor.instance.currentConnectionState, isA<Connected>());
+
+    // Unmount the screen — lazy mode must disconnect.
+    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(Chataptor.instance.currentConnectionState, isA<Disconnected>());
+  });
+
+  testWidgets('foregroundActive mode does NOT disconnect on dispose', (
+    tester,
+  ) async {
+    final transport = FakeChatTransport();
+    await Chataptor.init(
+      config: ChataptorConfig(
         siteId: 'abc',
         widgetKey: 'pk_x',
         apiUrl: Uri.parse('http://localhost:4000'),
-        transport: transport,
-      );
-
-      await tester.pumpWidget(
-        const MaterialApp(home: ChataptorChatScreen()),
-      );
-      await tester.pump(const Duration(milliseconds: 100));
-      expect(
-        Chataptor.instance.currentConnectionState,
-        isA<Connected>(),
-      );
-
-      // Unmount the screen — lazy mode must disconnect.
-      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
-      await tester.pump(const Duration(milliseconds: 100));
-
-      expect(
-        Chataptor.instance.currentConnectionState,
-        isA<Disconnected>(),
-      );
-    },
-  );
-
-  testWidgets(
-    'foregroundActive mode does NOT disconnect on dispose',
-    (tester) async {
-      final transport = FakeChatTransport();
-      await Chataptor.init(
-        config: ChataptorConfig(
-          siteId: 'abc',
-          widgetKey: 'pk_x',
-          apiUrl: Uri.parse('http://localhost:4000'),
-          transport: const TransportClientConfig(
-            connectionMode: ConnectionMode.foregroundActive,
-          ),
+        transport: const TransportClientConfig(
+          connectionMode: ConnectionMode.foregroundActive,
         ),
-        transport: transport,
-      );
+      ),
+      transport: transport,
+    );
 
-      await tester.pumpWidget(
-        const MaterialApp(home: ChataptorChatScreen()),
-      );
-      await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpWidget(const MaterialApp(home: ChataptorChatScreen()));
+    await tester.pump(const Duration(milliseconds: 100));
 
-      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
-      await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+    await tester.pump(const Duration(milliseconds: 100));
 
-      // In foregroundActive mode, the lifecycle observer owns the socket —
-      // the screen must not close it on its own.
-      expect(
-        Chataptor.instance.currentConnectionState,
-        isA<Connected>(),
-      );
-    },
-  );
+    // In foregroundActive mode, the lifecycle observer owns the socket —
+    // the screen must not close it on its own.
+    expect(Chataptor.instance.currentConnectionState, isA<Connected>());
+  });
 }

@@ -25,22 +25,19 @@ class ChataptorTheme {
 
   /// Sensible defaults for a light-mode app. Use as a starting point.
   factory ChataptorTheme.light() => const ChataptorTheme(
-        primaryColor: Color(0xFF6750A4),
-        onPrimaryColor: Colors.white,
-        customerBubbleColor: Color(0xFFEADDFF),
-        customerBubbleTextColor: Color(0xFF21005D),
-        agentBubbleColor: Color(0xFFF4F4F5),
-        agentBubbleTextColor: Color(0xFF1A1A1A),
-        backgroundColor: Colors.white,
-        surfaceColor: Color(0xFFFAFAFA),
-        bubbleRadius: BorderRadius.all(Radius.circular(18)),
-        headerTextStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        bodyTextStyle: TextStyle(fontSize: 14, height: 1.4),
-        translationLabelStyle: TextStyle(
-          fontSize: 12,
-          color: Color(0xFF6B7280),
-        ),
-      );
+    primaryColor: Color(0xFF6750A4),
+    onPrimaryColor: Colors.white,
+    customerBubbleColor: Color(0xFFEADDFF),
+    customerBubbleTextColor: Color(0xFF21005D),
+    agentBubbleColor: Color(0xFFF4F4F5),
+    agentBubbleTextColor: Color(0xFF1A1A1A),
+    backgroundColor: Colors.white,
+    surfaceColor: Color(0xFFFAFAFA),
+    bubbleRadius: BorderRadius.all(Radius.circular(18)),
+    headerTextStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+    bodyTextStyle: TextStyle(fontSize: 14, height: 1.4),
+    translationLabelStyle: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+  );
 
   /// Derives a [ChataptorTheme] from the ambient [ThemeData] so the SDK
   /// blends with the host app automatically.
@@ -57,12 +54,13 @@ class ChataptorTheme {
       backgroundColor: colors.surface,
       surfaceColor: colors.surfaceContainerLow,
       bubbleRadius: const BorderRadius.all(Radius.circular(18)),
-      headerTextStyle: material.textTheme.titleMedium ??
+      headerTextStyle:
+          material.textTheme.titleMedium ??
           const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-      bodyTextStyle: material.textTheme.bodyMedium ??
-          const TextStyle(fontSize: 14),
-      translationLabelStyle: material.textTheme.bodySmall
-              ?.copyWith(color: colors.outline) ??
+      bodyTextStyle:
+          material.textTheme.bodyMedium ?? const TextStyle(fontSize: 14),
+      translationLabelStyle:
+          material.textTheme.bodySmall?.copyWith(color: colors.outline) ??
           const TextStyle(fontSize: 12, color: Colors.grey),
     );
   }

@@ -8,11 +8,7 @@ import 'package:flutter/material.dart';
 /// the message has a translation, both bodies are shown.
 class ChataptorMessageBubble extends StatelessWidget {
   /// Creates a [ChataptorMessageBubble].
-  const ChataptorMessageBubble({
-    super.key,
-    required this.message,
-    this.theme,
-  });
+  const ChataptorMessageBubble({required this.message, super.key, this.theme});
 
   /// The message to render.
   final Message message;
@@ -40,8 +36,9 @@ class ChataptorMessageBubble extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
         child: Row(
-          mainAxisAlignment:
-              fromCustomer ? MainAxisAlignment.end : MainAxisAlignment.start,
+          mainAxisAlignment: fromCustomer
+              ? MainAxisAlignment.end
+              : MainAxisAlignment.start,
           children: [
             Flexible(
               child: ConstrainedBox(
@@ -86,23 +83,24 @@ class ChataptorMessageBubble extends StatelessWidget {
 
     final translated = message.bodyTranslated;
     if (translated != null && translated.isNotEmpty) {
-      widgets.add(const SizedBox(height: 6));
-      widgets.add(
-        Text(
-          translated,
-          style: theme.bodyTextStyle.copyWith(
-            color: foreground.withValues(alpha: 0.8),
-          ),
-        ),
-      );
       final lang = message.sourceLanguage ?? '';
-      widgets.add(const SizedBox(height: 2));
-      widgets.add(
-        Text(
-          loc.translatedLabel.replaceFirst('{language}', lang),
-          style: theme.translationLabelStyle,
-        ),
-      );
+      widgets
+        ..add(const SizedBox(height: 6))
+        ..add(
+          Text(
+            translated,
+            style: theme.bodyTextStyle.copyWith(
+              color: foreground.withValues(alpha: 0.8),
+            ),
+          ),
+        )
+        ..add(const SizedBox(height: 2))
+        ..add(
+          Text(
+            loc.translatedLabel.replaceFirst('{language}', lang),
+            style: theme.translationLabelStyle,
+          ),
+        );
     }
     return widgets;
   }

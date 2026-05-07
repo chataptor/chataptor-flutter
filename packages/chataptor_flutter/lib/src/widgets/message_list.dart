@@ -10,11 +10,7 @@ import 'package:flutter/material.dart';
 /// §7.10).
 class ChataptorMessageList extends StatelessWidget {
   /// Creates a [ChataptorMessageList].
-  const ChataptorMessageList({
-    super.key,
-    required this.messages,
-    this.theme,
-  });
+  const ChataptorMessageList({required this.messages, super.key, this.theme});
 
   /// Messages to render. Must be sorted oldest-first.
   final List<Message> messages;

@@ -6,23 +6,25 @@ void main() {
   testWidgets('renders input and send button with a11y labels', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(
-          body: ChataptorComposer(onSend: (_) async {}),
-        ),
+        home: Scaffold(body: ChataptorComposer(onSend: (_) async {})),
       ),
     );
     expect(find.byType(TextField), findsOneWidget);
     expect(find.byIcon(Icons.send_rounded), findsOneWidget);
   });
 
-  testWidgets('calls onSend with trimmed text and clears input', (tester) async {
+  testWidgets('calls onSend with trimmed text and clears input', (
+    tester,
+  ) async {
     String? sent;
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: ChataptorComposer(onSend: (text) async {
-            sent = text;
-          }),
+          body: ChataptorComposer(
+            onSend: (text) async {
+              sent = text;
+            },
+          ),
         ),
       ),
     );
