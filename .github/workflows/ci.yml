@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test (Flutter ${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Floor — the oldest Flutter we promise to support. Pinned so a
+          # silent bundled-Dart bump does not leak into green builds.
+          - name: floor-3.35.0
+            flutter-version: 3.35.0
+            flutter-channel: stable
+          # Latest stable — catches regressions that slip in on fresh merchant
+          # installs.
+          - name: stable
+            flutter-version: any
+            flutter-channel: stable
+          # Beta — catches upcoming-Flutter breaks early. Allowed to fail
+          # without blocking merge (see continue-on-error below).
+          - name: beta
+            flutter-version: any
+            flutter-channel: beta
+    runs-on: ubuntu-latest
+    # Beta-channel failures warn but do not block merge.
+    continue-on-error: ${{ matrix.flutter-channel == 'beta' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ matrix.flutter-version }}
+          channel: ${{ matrix.flutter-channel }}
+          cache: true
+
+      - name: Activate Melos (pinned)
+        run: dart pub global activate melos 7.0.0-dev.8
+
+      - name: Resolve workspace
+        run: dart pub get
+
+      - name: Format check
+        run: melos run format-check
+
+      - name: Analyze
+        run: melos run analyze
+
+      - name: Test
+        run: melos run test
+
+  pana:
+    name: Pana score
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: any
+          channel: stable
+          cache: true
+
+      - name: Activate pana
+        run: dart pub global activate pana
+
+      - name: Resolve workspace
+        run: dart pub get
+
+      - name: Run pana on chataptor
+        working-directory: packages/chataptor
+        run: |
+          score=$(pana . --json --no-warning | jq '.scores.grantedPoints')
+          echo "pana score: $score"
+          if [ "$score" -lt 140 ]; then
+            echo "::error::chataptor pana score $score is below 140"
+            exit 1
+          fi
+
+      - name: Run pana on chataptor_flutter
+        working-directory: packages/chataptor_flutter
+        run: |
+          score=$(pana . --json --no-warning | jq '.scores.grantedPoints')
+          echo "pana score: $score"
+          if [ "$score" -lt 140 ]; then
+            echo "::error::chataptor_flutter pana score $score is below 140"
+            exit 1
+          fi
