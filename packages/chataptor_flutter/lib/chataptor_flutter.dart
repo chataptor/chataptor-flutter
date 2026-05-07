@@ -2,7 +2,8 @@
 /// on top of the `chataptor` core.
 library chataptor_flutter;
 
-// Re-export everything from core so consumers only need this package.
 export 'package:chataptor/chataptor.dart';
 
-// Public API will land here as widgets and adapters are implemented.
+export 'src/adapters/shared_preferences_storage.dart';
+export 'src/adapters/value_listenable_stream.dart';
+export 'src/chataptor.dart';
