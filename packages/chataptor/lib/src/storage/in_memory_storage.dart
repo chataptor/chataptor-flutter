@@ -5,6 +5,9 @@ import 'package:chataptor/src/storage/chataptor_storage.dart';
 /// Flutter apps replace this with a `SharedPreferences`-backed adapter at
 /// `Chataptor.init` time.
 class InMemoryChataptorStorage implements ChataptorStorage {
+  /// Creates a new [InMemoryChataptorStorage] with an empty data map.
+  InMemoryChataptorStorage();
+
   final Map<String, String> _data = {};
 
   @override
