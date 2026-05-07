@@ -71,3 +71,6 @@ $RECYCLE.BIN/
 
 # Git worktrees
 .worktrees/
+
+# Claude Code local settings (machine-specific permissions)
+.claude/settings.local.json

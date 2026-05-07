@@ -11,15 +11,6 @@ Official Flutter SDK for [Chataptor](https://chataptor.com) — real-time multil
 
 MIT license. Verified publisher target: `chataptor.com`.
 
-## Status (2026-04-22)
-
-**v0.1.0 MVP under implementation.** Spec and plan are committed:
-
-- **Design spec:** [`docs/specs/2026-04-22-flutter-sdk-design.md`](./docs/specs/2026-04-22-flutter-sdk-design.md) — 14 sections, 1262 lines. Architecture, positioning, 25 locked decisions.
-- **Implementation plan:** [`docs/plans/2026-04-22-v0.1.0-mvp-implementation.md`](./docs/plans/2026-04-22-v0.1.0-mvp-implementation.md) — 50 tasks across 10 phases, 8490 lines, bite-sized TDD steps with complete code in every step.
-
-**Before suggesting any architectural alternative:** read the spec's §4 decision table. If the decision is already there, don't re-litigate it unless new information has emerged.
-
 ## Tech stack
 
 - **Dart SDK:** `^3.9.0` (sealed classes, pattern matching, records required — the Dart 3 features we rely on are available from Dart 3.0, but we pin 3.9 to unlock `super_sliver_list` perf work and keep the toolchain aligned with the floor Flutter that bundles Dart 3.9).
@@ -61,12 +52,11 @@ chataptor-flutter/
 ├── examples/
 │   └── quickstart/             # minimal runnable demo
 ├── docs/
-│   ├── specs/                  # design documents
-│   ├── plans/                  # implementation plans
 │   └── guides/                 # user-facing guides (getting-started, etc.)
 ├── .github/workflows/          # CI: ci.yml, examples-build.yml
 ├── pubspec.yaml                # workspace root + Melos config
 ├── analysis_options.yaml       # shared lints
+├── ARCHITECTURE.md             # 25 locked architectural decisions
 ├── CLAUDE.md                   # this file
 ├── CONTRIBUTING.md
 ├── CODE_OF_CONDUCT.md
@@ -129,7 +119,7 @@ Conventional Commits with package scope where applicable:
 
 ### TDD workflow
 
-Every task in the implementation plan follows this rhythm — do not skip steps:
+Follow this rhythm — do not skip steps:
 
 1. Write failing test.
 2. `flutter test <path>` — verify it fails with the expected error message.
@@ -137,7 +127,7 @@ Every task in the implementation plan follows this rhythm — do not skip steps:
 4. `flutter test <path>` — verify it passes.
 5. `git commit` (test + implementation together as one commit).
 
-No exceptions for "trivial" code. The plan's 50 tasks are all sized to this rhythm.
+No exceptions for "trivial" code.
 
 ### Dartdoc
 
@@ -147,11 +137,11 @@ Write doc comments that explain **why** the type exists and when to use it, not 
 
 ## Key tech decisions — TL;DR
 
-Locked in during brainstorming + research phase. Do **not** re-litigate without new evidence. Full reasoning in spec §4.
+Locked architectural decisions. Do **not** re-litigate without new evidence. Full table in [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 
 1. **Two-package federated monorepo** — `chataptor` (pure-Dart) + `chataptor_flutter` (widgets).
 2. **Customer-only persona.** Agent app is a separate product in a separate repo.
-3. **No end-to-end encryption.** Fundamentally incompatible with server-side translation, multi-agent assignment, Translation Memory, PII masking, analytics. Industry pattern — no B2C support chat uses E2E. Full rationale in spec §3.3.
+3. **No end-to-end encryption.** Fundamentally incompatible with server-side translation, multi-agent assignment, Translation Memory, PII masking, analytics. Industry pattern — no B2C support chat uses E2E.
 4. **Phoenix transport via a port.** `phoenix_socket` types never leak into public API; the package can be forked or replaced without breaking consumers.
 5. **`ValueStream<T>` custom, no rxdart.** Dual sync + stream access in ~50 lines with zero dependencies.
 6. **Sealed Result + exceptions split.** Sealed `SendResult` / `ChataptorError` for recoverable async flows; `ChataptorStateError` / `ChataptorConfigurationError` (subclasses of `StateError` / `ArgumentError`) for programmer errors.
@@ -165,56 +155,26 @@ Locked in during brainstorming + research phase. Do **not** re-litigate without 
 14. **MIT license. Verified publisher `chataptor.com`. OIDC-based trusted publishing** — no long-lived tokens in CI secrets.
 15. **Core package direct dependencies capped at 4:** `async`, `http`, `meta`, `phoenix_socket`. `web_socket_channel` enters transitively via `phoenix_socket` — it does **not** count against the direct-dep budget. New direct deps need strong justification.
 
-## Workflow for Claude Code sessions
+## Technical notes
 
-### Bootstrap on a fresh session
+### Connection lifecycle
 
-Read in this order:
+`ConnectionMode.lazy` is the default and means *exactly* "connect when chat UI mounts, disconnect when it unmounts". Widgets that open the socket must also close it — `ChataptorChatScreen.dispose()` is responsible for calling `client.disconnect()` when the configured mode is `lazy`. The lifecycle observer (`ChataptorLifecycleObserver`) only drives connect/disconnect in `foregroundActive` mode; it is a no-op for `lazy`. Any new container widget (e.g. `ChataptorChatSheet`) must own the same `lazy`-disconnect contract.
 
-1. **This file** (`CLAUDE.md`) — auto-loaded by Claude Code.
-2. **Memory files** at `~/.claude/projects/C--Users-pitom-Desktop-Projekty-chataptor-flutter/memory/` — auto-loaded. User profile, workflow preferences, project status.
-3. **Spec §4 decision table** (`docs/specs/2026-04-22-flutter-sdk-design.md`) — know what is already decided.
-4. **Plan** (`docs/plans/2026-04-22-v0.1.0-mvp-implementation.md`) — open to the task you're about to execute.
-
-### Executing the plan
-
-**Always use inline execution** (`superpowers:executing-plans`). Do NOT dispatch subagents — they multiply token cost unnecessarily. Execute each task directly in the same session: write failing test → run → implement → run → commit.
-
-**One phase per session.** After the last commit of a phase, run the phase completion gate before updating memory.
-
-### Phase completion gate
-
-After the last task commit of every phase — **mandatory, no exceptions**:
-
-1. `melos run analyze` — must exit clean (zero issues).
-2. `melos run format-check` — must exit clean; if it fails run `melos run format` then re-check.
-3. `melos run test` — full suite green.
-4. Call `advisor()` — independent review of what the phase actually produced vs. plan/spec. Address any blockers before closing the phase.
-5. Update `memory/project_status.md` to reflect the phase as complete.
-6. Tell the user to `/clear` and start a fresh session for the next phase.
-
-### When stuck on the `phoenix_socket` layer (Task 18)
-
-The plan targets `phoenix_socket ^0.12.0`. If `dart pub get` pulls a different compatible minor, the concrete API names (`stateStream`, `addChannel`, `PhoenixSocketOpenEvent`, etc.) may have moved. Check the actual installed version at `.dart_tool/package_config.json`, read the installed package's `lib/phoenix_socket.dart`, and reconcile. Keep the **shape** of `PhoenixSocketTransport` identical — only the internal `phoenix_socket` call sites should change. The `ChatTransport` contract and every caller depend on that being unchanged.
-
-### Connection lifecycle rules
-
-`ConnectionMode.lazy` is the default and means *exactly* "connect when chat UI mounts, disconnect when it unmounts". Widgets that open the socket must also close it — `ChataptorChatScreen.dispose()` is responsible for calling `client.disconnect()` when the configured mode is `lazy`. The lifecycle observer (`ChataptorLifecycleObserver`) only drives connect/disconnect in `foregroundActive` mode; it is a no-op for `lazy`. If you add a new container widget (e.g. `ChataptorChatSheet` in v0.4.0), it must own the same `lazy`-disconnect contract.
-
-### When writing widget tests
+### Widget tests
 
 - Always call `TestWidgetsFlutterBinding.ensureInitialized()` at the top of `main()`.
 - For tests touching `SharedPreferences`, call `SharedPreferences.setMockInitialValues({})` in `setUp`.
 - Use `tester.pump(Duration(...))` rather than `pumpAndSettle` when async streams are involved — `pumpAndSettle` can deadlock on broadcast streams.
 
-### What NOT to do
+### Constraints
 
-- ❌ Add dependencies to `packages/chataptor/pubspec.yaml` beyond the agreed 4. Each new dep needs a compelling spec-level justification.
+- ❌ Add dependencies to `packages/chataptor/pubspec.yaml` beyond the agreed 4. Each new dep needs a compelling justification against [`ARCHITECTURE.md`](./ARCHITECTURE.md) decision #25.
 - ❌ Introduce `package:flutter/*` imports into `packages/chataptor/lib/`. Core is pure Dart.
 - ❌ Skip the failing-test step in TDD.
 - ❌ Push to `main`. Always PR.
 - ❌ Force-push any branch someone else might have fetched.
-- ❌ Re-open decisions from spec §4 without new information.
+- ❌ Re-open decisions from `ARCHITECTURE.md` without new information.
 - ❌ Reference the private backend repo or agent mobile app repo by name in public artifacts (commits, PR descriptions, public docs). Both remain unnamed in this open-source project.
 
 ## Language
@@ -225,9 +185,9 @@ Code, identifiers, commit messages, dartdoc, pub.dev descriptions, READMEs, guid
 
 ## Related repos (not linked here on purpose)
 
-- **Chataptor backend** — private Elixir/Phoenix repo, stays closed-source. Contract documented in spec §8 + backend's own `docs/06-api-specification.md`.
+- **Chataptor backend** — private Elixir/Phoenix repo, stays closed-source.
 - **Chataptor agent mobile app** — separate private Flutter app for agents (not customers). Not in scope of this SDK.
 
 ## Last updated
 
-2026-05-06 — added phase completion gate (analyze + format-check + test + advisor) to workflow.
+2026-05-07 — repo cleanup: removed AI planning artifacts, extracted architecture decisions to `ARCHITECTURE.md`.
