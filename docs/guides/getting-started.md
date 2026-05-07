@@ -85,5 +85,5 @@ Identified-customer support lands in v0.2.0. Until then, v0.1.0 treats every use
 
 ## Next steps
 
-- [Design spec](../specs/2026-04-22-flutter-sdk-design.md) — full architecture.
+- [Architecture decisions](../../ARCHITECTURE.md) — 25 locked design decisions explained.
 - [Quickstart example](../../examples/quickstart) — runnable code.

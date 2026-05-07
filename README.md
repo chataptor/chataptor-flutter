@@ -56,9 +56,9 @@ See the [getting-started guide](./docs/guides/getting-started.md) for identified
 
 ## Status
 
-🚧 `v0.1.0` — MVP. Anonymous customer chat, drop-in widget, EN + PL locales.
+`v0.1.0` — first release. Anonymous customer chat, drop-in `ChataptorChatScreen` widget, English and Polish locales.
 
-Full roadmap: see [design spec §10](./docs/specs/2026-04-22-flutter-sdk-design.md#10-roadmap).
+The roadmap for v0.2.0–v1.0.0 (identified customers, push notifications, file attachments, 10+ locales, accessibility) is tracked in the repository issues.
 
 ## License
 
@@ -67,5 +67,6 @@ Full roadmap: see [design spec §10](./docs/specs/2026-04-22-flutter-sdk-design.
 ## Links
 
 - Product: [chataptor.com](https://chataptor.com)
-- Design spec: [`docs/specs/2026-04-22-flutter-sdk-design.md`](./docs/specs/2026-04-22-flutter-sdk-design.md)
+- Architecture decisions: [`ARCHITECTURE.md`](./ARCHITECTURE.md)
+- Getting started: [`docs/guides/getting-started.md`](./docs/guides/getting-started.md)
 - Issues: [GitHub issues](https://github.com/chataptor/chataptor-flutter/issues)

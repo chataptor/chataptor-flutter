@@ -4,10 +4,6 @@ Pure-Dart core client for [Chataptor](https://chataptor.com) — real-time multi
 
 > This is the **headless core**. For drop-in Flutter widgets, use [`chataptor_flutter`](../chataptor_flutter/).
 
-## Status
-
-🚧 `0.1.0-dev` — under active development. First public release is `0.1.0`.
-
 ## Install
 
 ```yaml
