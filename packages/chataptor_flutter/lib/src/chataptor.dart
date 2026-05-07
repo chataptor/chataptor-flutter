@@ -1,5 +1,6 @@
 import 'package:chataptor/chataptor.dart';
 import 'package:chataptor_flutter/src/adapters/shared_preferences_storage.dart';
+import 'package:chataptor_flutter/src/lifecycle.dart';
 
 /// Singleton entry point for Flutter apps.
 ///
@@ -10,6 +11,7 @@ class Chataptor {
   Chataptor._();
 
   static ChataptorClient? _client;
+  static ChataptorLifecycleObserver? _lifecycleObserver;
 
   /// The process-wide [ChataptorClient]. Throws [ChataptorStateError] if
   /// [init] has not been called.
@@ -68,11 +70,15 @@ class Chataptor {
             transport: transport,
             storage: storage,
           );
+
+    _lifecycleObserver = ChataptorLifecycleObserver(client: _client!)..attach();
   }
 
   /// Tears down the singleton. Use between tests or when logging out a
   /// multi-tenant host app.
   static void reset() {
+    _lifecycleObserver?.detach();
+    _lifecycleObserver = null;
     final existing = _client;
     _client = null;
     existing?.dispose();
