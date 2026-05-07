@@ -4,12 +4,6 @@
 
 Official Flutter SDK for [Chataptor](https://chataptor.com) — adds live customer support to your mobile and web Flutter apps with built-in bidirectional auto-translation, so your support team can serve customers in any language without hiring polyglots.
 
-## Status
-
-**🚧 Work in progress — design phase.** Not yet published to pub.dev.
-
-The design document lives in [`docs/specs/`](./docs/specs/) and the `v0.1.0` implementation plan in [`docs/plans/`](./docs/plans/). Follow this repo to be notified when `v0.1.0` ships.
-
 ## Why Chataptor
 
 - 🌍 **Real-time bidirectional auto-translation** — customer writes in Japanese, your agent reads Polish, replies in Polish, customer reads Japanese. No workflow change.
@@ -20,18 +14,51 @@ The design document lives in [`docs/specs/`](./docs/specs/) and the `v0.1.0` imp
 
 ## Packages
 
-This is a monorepo. Packages will be published separately to pub.dev:
+| Package | Purpose | Install |
+|---------|---------|---------|
+| [`chataptor`](./packages/chataptor) | Pure-Dart headless core | `dart pub add chataptor` |
+| [`chataptor_flutter`](./packages/chataptor_flutter) | Flutter widgets + singleton | `flutter pub add chataptor_flutter` |
 
-| Package | Purpose |
-|---------|---------|
-| [`chataptor`](./packages/chataptor) | Pure-Dart headless core — sockets, auth, streams, hooks. |
-| [`chataptor_flutter`](./packages/chataptor_flutter) | Flutter widgets + singleton built on top of the core. |
+Most integrators only need `chataptor_flutter` — it transitively re-exports the core.
 
-Most integrators only need `chataptor_flutter` — it transitively re-exports the core. Use the core directly when you want full control over the chat interface (custom UI, headless integrations, server-side tests).
+## 60-second quickstart
 
-## Installation
+```dart
+import 'package:chataptor_flutter/chataptor_flutter.dart';
+import 'package:flutter/material.dart';
 
-> Coming with `v0.1.0`.
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Chataptor.init(
+    siteId: 'your-site',
+    widgetKey: 'pk_xxx',
+  );
+
+  runApp(MaterialApp(
+    localizationsDelegates: const [ChataptorLocalizations.delegate],
+    supportedLocales: ChataptorLocalizations.supportedLocales,
+    home: Scaffold(
+      body: Center(
+        child: Builder(builder: (ctx) => FilledButton(
+          onPressed: () => Navigator.of(ctx).push(
+            MaterialPageRoute(builder: (_) => const ChataptorChatScreen()),
+          ),
+          child: const Text('Open chat'),
+        )),
+      ),
+    ),
+  ));
+}
+```
+
+See the [getting-started guide](./docs/guides/getting-started.md) for identified customers, theming, and custom UIs.
+
+## Status
+
+🚧 `v0.1.0` — MVP. Anonymous customer chat, drop-in widget, EN + PL locales.
+
+Full roadmap: see [design spec §10](./docs/specs/2026-04-22-flutter-sdk-design.md#10-roadmap).
 
 ## License
 
@@ -40,5 +67,5 @@ Most integrators only need `chataptor_flutter` — it transitively re-exports th
 ## Links
 
 - Product: [chataptor.com](https://chataptor.com)
-- Design spec: [`docs/specs/`](./docs/specs/)
-- Implementation plan: [`docs/plans/`](./docs/plans/)
+- Design spec: [`docs/specs/2026-04-22-flutter-sdk-design.md`](./docs/specs/2026-04-22-flutter-sdk-design.md)
+- Issues: [GitHub issues](https://github.com/chataptor/chataptor-flutter/issues)
