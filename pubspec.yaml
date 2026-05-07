@@ -6,6 +6,7 @@ environment:
 workspace:
   - packages/chataptor
   - packages/chataptor_flutter
+  - examples/quickstart
 
 dev_dependencies:
   melos: ^7.0.0

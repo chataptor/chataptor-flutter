@@ -1,0 +1,23 @@
+name: chataptor_quickstart_example
+description: Minimal Flutter app demonstrating Chataptor SDK integration.
+publish_to: none
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.0
+  flutter: '>=3.35.0'
+
+resolution: workspace
+
+dependencies:
+  chataptor_flutter: ^0.1.0-dev
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_lints: ^5.0.0
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
