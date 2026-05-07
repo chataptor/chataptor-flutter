@@ -12,10 +12,8 @@ class ValueListenableStream<T> extends ChangeNotifier
     implements ValueListenable<T> {
   /// Creates a [ValueListenableStream] subscribed to [stream], starting
   /// from [initialValue].
-  ValueListenableStream({
-    required Stream<T> stream,
-    required T initialValue,
-  }) : _notifier = ValueNotifier<T>(initialValue) {
+  ValueListenableStream({required Stream<T> stream, required T initialValue})
+    : _notifier = ValueNotifier<T>(initialValue) {
     _subscription = stream.listen((event) {
       _notifier.value = event;
       notifyListeners();

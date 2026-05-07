@@ -7,11 +7,7 @@ import 'package:flutter/widgets.dart';
 /// in the tree.
 class ChataptorScope extends InheritedWidget {
   /// Creates a [ChataptorScope] around [child] with an explicit [client].
-  const ChataptorScope({
-    super.key,
-    required this.client,
-    required super.child,
-  });
+  const ChataptorScope({required this.client, required super.child, super.key});
 
   /// The client exposed to descendants.
   final ChataptorClient client;
@@ -20,9 +16,9 @@ class ChataptorScope extends InheritedWidget {
   /// wrapping [Chataptor.instance] if none is found. Throws
   /// [ChataptorStateError] if neither a scope nor [Chataptor.init] is
   /// available.
+  // ignore: prefer_constructors_over_static_methods
   static ChataptorScope of(BuildContext context) {
-    final scope =
-        context.dependOnInheritedWidgetOfExactType<ChataptorScope>();
+    final scope = context.dependOnInheritedWidgetOfExactType<ChataptorScope>();
     if (scope != null) return scope;
     return ChataptorScope(
       client: Chataptor.instance,

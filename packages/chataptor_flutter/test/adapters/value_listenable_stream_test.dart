@@ -33,10 +33,7 @@ void main() {
     final listenable = ValueListenableStream<int>(
       stream: const Stream<int>.empty(),
       initialValue: 0,
-    );
-    listenable.dispose();
-    // Calling dispose again is safe? For ValueNotifier the second call throws,
-    // so we only verify the first works.
+    )..dispose();
     expect(listenable, isA<ValueListenable<int>>());
   });
 }

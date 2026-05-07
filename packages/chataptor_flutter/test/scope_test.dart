@@ -1,4 +1,3 @@
-import 'package:chataptor/chataptor.dart';
 import 'package:chataptor/testing.dart';
 import 'package:chataptor_flutter/chataptor_flutter.dart';
 import 'package:flutter/material.dart';
@@ -41,8 +40,9 @@ void main() {
     expect(found, client);
   });
 
-  testWidgets('ChataptorScope.of falls back to Chataptor.instance',
-      (tester) async {
+  testWidgets('ChataptorScope.of falls back to Chataptor.instance', (
+    tester,
+  ) async {
     await Chataptor.init(
       siteId: 'abc',
       widgetKey: 'pk_x',

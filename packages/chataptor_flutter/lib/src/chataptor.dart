@@ -34,7 +34,7 @@ class Chataptor {
   /// [customer]. Tier 3 passes a full [config] directly (set [config] and
   /// leave the ergonomic params null).
   ///
-  /// Tests may pass a [transport] override to inject a [FakeChatTransport].
+  /// Tests may pass a [transport] override to inject a `FakeChatTransport`.
   /// Production code never does.
   static Future<void> init({
     String? siteId,
@@ -50,7 +50,8 @@ class Chataptor {
       );
     }
 
-    final effectiveConfig = config ??
+    final effectiveConfig =
+        config ??
         ChataptorConfig(
           siteId: siteId ?? _required('siteId'),
           widgetKey: widgetKey ?? _required('widgetKey'),
@@ -58,13 +59,12 @@ class Chataptor {
           customer: customer ?? const CustomerIdentity.anonymous(),
         );
 
-    final storage = effectiveConfig.storage ??
+    final storage =
+        effectiveConfig.storage ??
         await SharedPreferencesChataptorStorage.create();
 
     _client = transport == null
-        ? ChataptorClient(
-            config: effectiveConfig.copyWith(storage: storage),
-          )
+        ? ChataptorClient(config: effectiveConfig.copyWith(storage: storage))
         : ChataptorClient.internal(
             config: effectiveConfig.copyWith(storage: storage),
             transport: transport,
@@ -84,8 +84,7 @@ class Chataptor {
     existing?.dispose();
   }
 
-  static String _required(String name) =>
-      throw ChataptorConfigurationError(
-        'Chataptor.init: $name is required when config is not supplied',
-      );
+  static String _required(String name) => throw ChataptorConfigurationError(
+    'Chataptor.init: $name is required when config is not supplied',
+  );
 }

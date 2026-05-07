@@ -34,8 +34,10 @@ class SharedPreferencesChataptorStorage implements ChataptorStorage {
 
   @override
   Future<void> clear() async {
-    final ourKeys =
-        _prefs.getKeys().where((k) => k.startsWith(_prefix)).toList();
+    final ourKeys = _prefs
+        .getKeys()
+        .where((k) => k.startsWith(_prefix))
+        .toList();
     for (final k in ourKeys) {
       await _prefs.remove(k);
     }

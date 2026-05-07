@@ -15,7 +15,7 @@ class ChataptorLifecycleObserver with WidgetsBindingObserver {
   final ChataptorClient client;
 
   /// Registers the observer with [WidgetsBinding]. Call once during
-  /// [Chataptor.init].
+  /// `Chataptor.init`.
   void attach() {
     WidgetsBinding.instance.addObserver(this);
   }
