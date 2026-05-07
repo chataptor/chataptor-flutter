@@ -7,3 +7,4 @@ export 'package:chataptor/chataptor.dart';
 export 'src/adapters/shared_preferences_storage.dart';
 export 'src/adapters/value_listenable_stream.dart';
 export 'src/chataptor.dart';
+export 'src/scope.dart';
