@@ -1,0 +1,45 @@
+import 'package:chataptor/chataptor.dart';
+import 'package:chataptor_flutter/chataptor_flutter.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+Message _msg(
+  String id,
+  String body, {
+  MessageAuthor author = MessageAuthor.agent,
+}) =>
+    Message(
+      id: id,
+      conversationId: 'c1',
+      body: body,
+      author: author,
+      timestamp: DateTime.utc(2026, 4, 22, 12, int.parse(id)),
+      type: MessageType.text,
+      deliveryChannel: DeliveryChannel.websocket,
+      status: MessageStatus.sent,
+    );
+
+void main() {
+  testWidgets('renders a list of messages', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ChataptorMessageList(
+            messages: [_msg('1', 'first'), _msg('2', 'second')],
+          ),
+        ),
+      ),
+    );
+    expect(find.text('first'), findsOneWidget);
+    expect(find.text('second'), findsOneWidget);
+  });
+
+  testWidgets('shows empty state widget when no messages', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(body: ChataptorMessageList(messages: [])),
+      ),
+    );
+    expect(find.textContaining('No messages'), findsOneWidget);
+  });
+}
