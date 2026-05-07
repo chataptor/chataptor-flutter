@@ -5,10 +5,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Replace with your real site credentials from the Chataptor admin console.
-  await Chataptor.init(
-    siteId: 'demo-site',
-    widgetKey: 'pk_demo_key',
-  );
+  await Chataptor.init(siteId: 'demo-site', widgetKey: 'pk_demo_key');
 
   runApp(const QuickstartApp());
 }
@@ -26,9 +23,7 @@ class QuickstartApp extends StatelessWidget {
         colorSchemeSeed: const Color(0xFF6750A4),
         useMaterial3: true,
       ),
-      localizationsDelegates: const [
-        ChataptorLocalizations.delegate,
-      ],
+      localizationsDelegates: const [ChataptorLocalizations.delegate],
       supportedLocales: ChataptorLocalizations.supportedLocales,
       home: const _Home(),
     );
@@ -48,9 +43,7 @@ class _Home extends StatelessWidget {
           label: const Text('Open chat'),
           onPressed: () {
             Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => const ChataptorChatScreen(),
-              ),
+              MaterialPageRoute(builder: (_) => const ChataptorChatScreen()),
             );
           },
         ),
