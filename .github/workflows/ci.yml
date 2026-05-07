@@ -87,12 +87,7 @@ jobs:
             exit 1
           fi
 
-      - name: Run pana on chataptor_flutter
-        working-directory: packages/chataptor_flutter
-        run: |
-          score=$(pana . --json --no-warning | jq '.scores.grantedPoints')
-          echo "pana score: $score"
-          if [ "$score" -lt 140 ]; then
-            echo "::error::chataptor_flutter pana score $score is below 140"
-            exit 1
-          fi
+      # TODO: re-enable once chataptor is published on pub.dev.
+      # pana resolves dependencies outside the Pub Workspace, so it cannot
+      # find the local path dep and scores 40/160. The check is deferred to
+      # publication time.
