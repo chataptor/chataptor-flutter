@@ -9,3 +9,4 @@ export 'src/adapters/value_listenable_stream.dart';
 export 'src/chataptor.dart';
 export 'src/lifecycle.dart';
 export 'src/scope.dart';
+export 'src/theme/chataptor_theme.dart';
