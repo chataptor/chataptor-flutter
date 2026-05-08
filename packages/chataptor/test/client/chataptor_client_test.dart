@@ -24,6 +24,7 @@ void main() {
 
     test('connect transitions Connecting → Connected', () async {
       final transport = FakeChatTransport();
+      transport.inject.conversationCreated('site:abc', 'conv1');
       final client = ChataptorClient.internal(
         config: _testConfig(),
         transport: transport,
@@ -38,20 +39,47 @@ void main() {
       expect(states.last, isA<Connected>());
     });
 
-    test('connect joins site:<siteId> channel', () async {
-      final transport = FakeChatTransport();
-      final client = ChataptorClient.internal(
-        config: _testConfig(),
-        transport: transport,
-      );
-      await client.connect();
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+    test(
+      'connect joins site:<siteId> then conversation:<id> channels',
+      () async {
+        final transport = FakeChatTransport();
+        transport.inject.conversationCreated('site:abc', 'conv1');
+        final client = ChataptorClient.internal(
+          config: _testConfig(),
+          transport: transport,
+        );
+        await client.connect();
+        await Future<void>.delayed(const Duration(milliseconds: 50));
 
-      expect(transport.recorded.joinedChannels, ['site:abc']);
-    });
+        expect(transport.recorded.joinedChannels, [
+          'site:abc',
+          'conversation:conv1',
+        ]);
+      },
+    );
+
+    test(
+      'connect stays Disconnected when conversation:create times out',
+      () async {
+        final transport = FakeChatTransport();
+        // No conversationCreated → push returns PushTimeout.
+        final client = ChataptorClient.internal(
+          config: _testConfig(),
+          transport: transport,
+        );
+        final states = <ConnectionState>[];
+        client.connectionState.listen(states.add);
+
+        await client.connect();
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+
+        expect(states.last, isA<Disconnected>());
+      },
+    );
 
     test('disconnect transitions to Disconnected', () async {
       final transport = FakeChatTransport();
+      transport.inject.conversationCreated('site:abc', 'conv1');
       final client = ChataptorClient.internal(
         config: _testConfig(),
         transport: transport,

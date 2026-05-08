@@ -2,6 +2,9 @@ import 'package:chataptor/chataptor.dart';
 import 'package:chataptor/testing.dart';
 import 'package:test/test.dart';
 
+const _convId = 'conv1';
+const _convTopic = 'conversation:$_convId';
+
 ChataptorConfig _baseConfig({ChataptorHooks? hooks}) => ChataptorConfig(
   siteId: 'abc',
   widgetKey: 'pk_x',
@@ -13,6 +16,7 @@ Future<({ChataptorClient client, FakeChatTransport transport})> _connected({
   ChataptorHooks? hooks,
 }) async {
   final transport = FakeChatTransport();
+  transport.inject.conversationCreated('site:abc', _convId);
   final client = ChataptorClient.internal(
     config: _baseConfig(hooks: hooks),
     transport: transport,
@@ -27,7 +31,7 @@ void main() {
     test('returns SendSuccess when server replies PushOk', () async {
       final (:client, :transport) = await _connected();
       transport.inject.replyFor(
-        topic: 'site:abc',
+        topic: _convTopic,
         event: 'message:send',
         result: const PushOk({'msg_id': 1}),
       );
@@ -38,16 +42,18 @@ void main() {
       final draft = (result as SendSuccess).draft;
       expect(draft.body, 'hi');
 
-      expect(transport.recorded.pushes, hasLength(1));
-      final sent = transport.recorded.pushes.first;
+      // conversation:create + message:send
+      expect(transport.recorded.pushes, hasLength(2));
+      final sent = transport.recorded.pushes.last;
+      expect(sent.topic, _convTopic);
       expect(sent.event, 'message:send');
-      expect(sent.payload['body'], 'hi');
+      expect(sent.payload['text'], 'hi');
     });
 
     test('returns SendFailure when server replies PushServerError', () async {
       final (:client, :transport) = await _connected();
       transport.inject.replyFor(
-        topic: 'site:abc',
+        topic: _convTopic,
         event: 'message:send',
         result: const PushServerError(reason: 'boom', response: {}),
       );
@@ -76,7 +82,7 @@ void main() {
         ),
       );
       transport.inject.replyFor(
-        topic: 'site:abc',
+        topic: _convTopic,
         event: 'message:send',
         result: const PushOk({}),
       );
@@ -84,8 +90,8 @@ void main() {
       final result = await client.sendMessage('hi');
 
       expect(result, isA<SendSuccess>());
-      final sent = transport.recorded.pushes.first;
-      expect(sent.payload['body'], 'hi!');
+      final sent = transport.recorded.pushes.last;
+      expect(sent.payload['text'], 'hi!');
       expect(sent.payload['metadata'], {'source': 'test'});
     });
 
@@ -98,7 +104,11 @@ void main() {
 
       expect(result, isA<SendFailure>());
       expect((result as SendFailure).error, isA<ValidationError>());
-      expect(transport.recorded.pushes, isEmpty);
+      // Only conversation:create push, no message:send.
+      expect(
+        transport.recorded.pushes.any((p) => p.event == 'message:send'),
+        isFalse,
+      );
     });
   });
 }

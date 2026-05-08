@@ -61,7 +61,12 @@ class ChataptorClient {
       StreamController<ChataptorError>.broadcast();
 
   bool _disposed = false;
+
+  /// Active conversation ID, set after `conversation:create` succeeds.
+  String? _conversationId;
+
   String _siteTopic() => 'site:${config.siteId}';
+  String _conversationTopic() => 'conversation:$_conversationId';
 
   /// Stream of connection state updates.
   Stream<ConnectionState> get connectionState => _connectionState.stream;
@@ -77,7 +82,9 @@ class ChataptorClient {
   /// Stream of non-fatal errors emitted by the client.
   Stream<ChataptorError> get errors => _errors.stream;
 
-  /// Opens the WebSocket and joins the site channel. Idempotent.
+  /// Opens the WebSocket, joins the site channel, creates a conversation, and
+  /// joins the conversation channel. [Connected] is emitted only after the
+  /// full handshake completes. Idempotent.
   Future<void> connect() async {
     _requireNotDisposed();
     if (currentConnectionState is Connected) return;
@@ -110,12 +117,53 @@ class ChataptorClient {
       _connectionState.add(const Disconnected(DisconnectReason.networkError));
       rethrow;
     }
+
+    // Create conversation on the site channel and join its dedicated channel.
+    final result = await _transport.push(_siteTopic(), 'conversation:create', {
+      'user_agent': 'chataptor-flutter/0.1.0 (flutter)',
+    });
+
+    switch (result) {
+      case PushOk(:final response):
+        final convRaw = response['conversation'];
+        if (convRaw is! Map) {
+          _emitConnectError('conversation:create returned unexpected response');
+          return;
+        }
+        final convId = (convRaw['conversationId'] ?? convRaw['conv_id'])
+            ?.toString();
+        if (convId == null || convId.isEmpty) {
+          _emitConnectError('conversation:create returned no conversation id');
+          return;
+        }
+        _conversationId = convId;
+        await _transport.joinChannel(_conversationTopic(), {});
+        _connectionState.add(const Connected());
+        config.hooks.onConnectionStateChanged?.call(const Connected());
+
+      case PushServerError(:final reason):
+        _emitConnectError('conversation:create rejected by server: $reason');
+
+      case PushTimeout():
+        _emitConnectError('conversation:create timed out');
+
+      case PushDisconnected():
+        _emitConnectError('disconnected during conversation:create');
+    }
+  }
+
+  void _emitConnectError(String message) {
+    final err = NetworkError(message);
+    _errors.add(err);
+    config.hooks.onError?.call(err);
+    _connectionState.add(const Disconnected(DisconnectReason.networkError));
   }
 
   /// Closes the WebSocket. Idempotent.
   Future<void> disconnect() async {
     if (_disposed) return;
     await _transport.disconnect();
+    _conversationId = null;
     _connectionState.add(const Disconnected(DisconnectReason.userRequested));
   }
 
@@ -146,11 +194,15 @@ class ChataptorClient {
     }
 
     final payload = <String, dynamic>{
-      'body': draft.body,
+      'text': draft.body,
       if (draft.metadata.isNotEmpty) 'metadata': draft.metadata,
     };
 
-    final result = await _transport.push(_siteTopic(), 'message:send', payload);
+    final result = await _transport.push(
+      _conversationTopic(),
+      'message:send',
+      payload,
+    );
 
     return switch (result) {
       PushOk() => SendSuccess(draft),
@@ -215,9 +267,11 @@ class ChataptorClient {
   }
 
   void _handleTransportState(TransportConnectionState state) {
+    // TransportConnected is intentionally not mapped here — connect() emits
+    // Connected only after the full conversation handshake completes.
     final mapped = switch (state) {
       TransportConnecting() => const Connecting(),
-      TransportConnected() => const Connected(),
+      TransportConnected() => null,
       TransportReconnecting(:final attemptNumber, :final nextAttemptIn) =>
         Reconnecting(
           attemptNumber: attemptNumber,
@@ -227,6 +281,7 @@ class ChataptorClient {
         DisconnectReason.networkError,
       ),
     };
+    if (mapped == null) return;
     _connectionState.add(mapped);
     config.hooks.onConnectionStateChanged?.call(mapped);
   }

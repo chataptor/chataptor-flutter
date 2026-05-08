@@ -59,6 +59,20 @@ class FakeChatTransportInject {
         .putIfAbsent('$topic::$event', () => <PushResult>[])
         .add(result);
   }
+
+  /// Registers a [PushOk] reply for `conversation:create` on [siteTopic].
+  ///
+  /// [convId] becomes both `conversationId` and `conv_id` in the response,
+  /// matching what the backend returns.
+  void conversationCreated(String siteTopic, String convId) {
+    replyFor(
+      topic: siteTopic,
+      event: 'conversation:create',
+      result: PushOk({
+        'conversation': {'conv_id': convId, 'conversationId': convId},
+      }),
+    );
+  }
 }
 
 /// In-memory fake implementation of [ChatTransport] for unit / widget tests.
