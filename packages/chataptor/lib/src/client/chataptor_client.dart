@@ -137,7 +137,18 @@ class ChataptorClient {
           return;
         }
         _conversationId = convId;
-        await _transport.joinChannel(_conversationTopic(), {});
+        try {
+          await _transport.joinChannel(_conversationTopic(), {});
+        } on Object catch (err, st) {
+          config.logger.log(
+            ChataptorLogLevel.error,
+            'joining conversation channel failed',
+            error: err,
+            stackTrace: st,
+          );
+          _emitConnectError('joining conversation channel failed: $err');
+          return;
+        }
         _connectionState.add(const Connected());
         config.hooks.onConnectionStateChanged?.call(const Connected());
 
