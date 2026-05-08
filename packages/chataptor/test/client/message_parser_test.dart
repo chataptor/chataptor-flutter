@@ -55,5 +55,22 @@ void main() {
         isTrue,
       );
     });
+
+    test('unwraps {message: {...}} wrapper sent by backend', () {
+      final msg = parseIncomingMessage({
+        'message': {
+          'msg_id': 123,
+          'conv_id': 42,
+          'body_src': 'Hello',
+          'author': 'agent',
+          'inserted_at': '2026-04-22T12:00:00Z',
+          'delivery_channel': 'websocket',
+        },
+      });
+      expect(msg.id, '123');
+      expect(msg.conversationId, '42');
+      expect(msg.body, 'Hello');
+      expect(msg.author, MessageAuthor.agent);
+    });
   });
 }

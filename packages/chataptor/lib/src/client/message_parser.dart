@@ -8,18 +8,19 @@ import 'package:chataptor/src/models/message.dart';
 /// lenient — the SDK should never crash on slightly-unexpected server
 /// responses.
 Message parseIncomingMessage(Map<String, dynamic> payload) {
-  final id = (payload['msg_id'] ?? payload['id'] ?? '').toString();
-  final convId = (payload['conv_id'] ?? payload['conversation_id'] ?? '')
-      .toString();
-  final body = (payload['body_src'] ?? payload['body'] ?? '').toString();
-  final bodyTranslated = payload['body_translated'] as String?;
-  final sourceLanguage = payload['source_language'] as String?;
-  final targetLanguage = payload['target_language'] as String?;
-  final author = _parseAuthor(payload['author']);
-  final timestamp = _parseTimestamp(
-    payload['inserted_at'] ?? payload['timestamp'],
-  );
-  final channel = _parseChannel(payload['delivery_channel']);
+  // Backend wraps the message object: {message: {...}} — unwrap tolerantly.
+  final raw = payload['message'] is Map
+      ? (payload['message'] as Map).cast<String, dynamic>()
+      : payload;
+  final id = (raw['msg_id'] ?? raw['id'] ?? '').toString();
+  final convId = (raw['conv_id'] ?? raw['conversation_id'] ?? '').toString();
+  final body = (raw['body_src'] ?? raw['body'] ?? '').toString();
+  final bodyTranslated = raw['body_translated'] as String?;
+  final sourceLanguage = raw['source_language'] as String?;
+  final targetLanguage = raw['target_language'] as String?;
+  final author = _parseAuthor(raw['author']);
+  final timestamp = _parseTimestamp(raw['inserted_at'] ?? raw['timestamp']);
+  final channel = _parseChannel(raw['delivery_channel']);
 
   return Message(
     id: id,
