@@ -7,20 +7,31 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  ChataptorClient makeClient(ConnectionMode mode) => ChataptorClient.internal(
-    config: ChataptorConfig(
-      siteId: 'abc',
-      widgetKey: 'pk_x',
-      apiUrl: Uri.parse('http://localhost:4000'),
-      transport: TransportClientConfig(connectionMode: mode),
-    ),
-    transport: FakeChatTransport(),
-  );
+  ({ChataptorClient client, FakeChatTransport transport}) makeClient(
+    ConnectionMode mode,
+  ) {
+    final transport = FakeChatTransport();
+    return (
+      client: ChataptorClient.internal(
+        config: ChataptorConfig(
+          siteId: 'abc',
+          widgetKey: 'pk_x',
+          apiUrl: Uri.parse('http://localhost:4000'),
+          transport: TransportClientConfig(connectionMode: mode),
+        ),
+        transport: transport,
+      ),
+      transport: transport,
+    );
+  }
 
   test(
     'foregroundActive mode disconnects on paused, reconnects on resumed',
     () async {
-      final client = makeClient(ConnectionMode.foregroundActive);
+      final (:client, :transport) = makeClient(ConnectionMode.foregroundActive);
+      // Two replies: initial connect + reconnect after resume.
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      transport.inject.conversationCreated('site:abc', 'conv1');
       final observer = ChataptorLifecycleObserver(client: client);
 
       await client.connect();
@@ -37,7 +48,8 @@ void main() {
   );
 
   test('lazy mode ignores lifecycle transitions', () async {
-    final client = makeClient(ConnectionMode.lazy);
+    final (:client, :transport) = makeClient(ConnectionMode.lazy);
+    transport.inject.conversationCreated('site:abc', 'conv1');
     final observer = ChataptorLifecycleObserver(client: client);
 
     await client.connect();

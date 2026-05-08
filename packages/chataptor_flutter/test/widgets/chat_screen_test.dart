@@ -14,6 +14,7 @@ void main() {
 
   testWidgets('renders composer and empty state initially', (tester) async {
     final transport = FakeChatTransport();
+    transport.inject.conversationCreated('site:abc', 'conv1');
     await Chataptor.init(
       siteId: 'abc',
       widgetKey: 'pk_x',
@@ -29,6 +30,7 @@ void main() {
 
   testWidgets('sending a message updates the list', (tester) async {
     final transport = FakeChatTransport();
+    transport.inject.conversationCreated('site:abc', 'conv1');
     await Chataptor.init(
       siteId: 'abc',
       widgetKey: 'pk_x',
@@ -39,7 +41,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     transport.inject.replyFor(
-      topic: 'site:abc',
+      topic: 'conversation:conv1',
       event: 'message:send',
       result: const PushOk({'msg_id': 1}),
     );
@@ -55,6 +57,7 @@ void main() {
     tester,
   ) async {
     final transport = FakeChatTransport();
+    transport.inject.conversationCreated('site:abc', 'conv1');
     await Chataptor.init(
       siteId: 'abc',
       widgetKey: 'pk_x',
@@ -77,6 +80,7 @@ void main() {
     tester,
   ) async {
     final transport = FakeChatTransport();
+    transport.inject.conversationCreated('site:abc', 'conv1');
     await Chataptor.init(
       config: ChataptorConfig(
         siteId: 'abc',
