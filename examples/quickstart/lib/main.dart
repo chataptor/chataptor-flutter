@@ -59,8 +59,6 @@ class QuickstartApp extends StatelessWidget {
         colorSchemeSeed: const Color(0xFF6750A4),
         useMaterial3: true,
       ),
-      localizationsDelegates: const [ChataptorLocalizations.delegate],
-      supportedLocales: ChataptorLocalizations.supportedLocales,
       home: const _Home(),
     );
   }
