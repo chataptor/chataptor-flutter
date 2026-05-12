@@ -15,7 +15,7 @@ void main() {
 
   test('ChataptorConfig sensible defaults', () {
     final config = ChataptorConfig(siteId: 'abc', widgetKey: 'pk_x');
-    expect(config.apiUrl, Uri.parse('https://api.chataptor.com'));
+    expect(config.apiUrl, Uri.parse('https://chataptor.com'));
     expect(config.customer, const CustomerIdentity.anonymous());
     expect(config.transport, const TransportClientConfig());
     expect(config.translation.enabled, isTrue);

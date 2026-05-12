@@ -34,7 +34,7 @@ class ChataptorConfig {
     this.storage,
     this.httpClient,
     this.logger = const NoOpChataptorLogger(),
-  }) : apiUrl = apiUrl ?? Uri.parse('https://api.chataptor.com'),
+  }) : apiUrl = apiUrl ?? Uri.parse('https://chataptor.com'),
        translation = translation ?? TranslationConfig.auto(),
        push = push ?? PushConfig.disabled() {
     if (siteId.isEmpty) {
@@ -51,7 +51,7 @@ class ChataptorConfig {
   /// Widget API key for this site (public — safe to embed in client code).
   final String widgetKey;
 
-  /// Base REST API URL. Defaults to `https://api.chataptor.com`.
+  /// Base REST API URL. Defaults to `https://chataptor.com`.
   final Uri apiUrl;
 
   /// Customer identity.
