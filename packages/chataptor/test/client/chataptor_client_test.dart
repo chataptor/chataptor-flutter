@@ -196,4 +196,141 @@ void main() {
       },
     );
   });
+
+  group('ChataptorClient message deduplication', () {
+    test('deduplicates message:received events with the same msg_id', () async {
+      final transport = FakeChatTransport();
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      final client = ChataptorClient.internal(
+        config: _testConfig(),
+        transport: transport,
+      );
+      await client.connect();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      final messages = <Message>[];
+      client.messages.listen(messages.add);
+
+      const payload = {
+        'message': {
+          'msg_id': 'msg-1',
+          'body_src': 'Hello agent',
+          'author': 'agent',
+        },
+      };
+      transport.inject.event(
+        const MessageReceived(
+          topic: 'conversation:conv1',
+          event: 'message:received',
+          payload: payload,
+        ),
+      );
+      transport.inject.event(
+        const MessageReceived(
+          topic: 'conversation:conv1',
+          event: 'message:received',
+          payload: payload,
+        ),
+      );
+
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(messages, hasLength(1));
+      expect(messages.first.id, 'msg-1');
+    });
+
+    test(
+      'filters server echo of own sent message when msg_id matches push reply',
+      () async {
+        final transport = FakeChatTransport();
+        transport.inject.conversationCreated('site:abc', 'conv1');
+        transport.inject.replyFor(
+          topic: 'conversation:conv1',
+          event: 'message:send',
+          result: const PushOk({
+            'message': {
+              'msg_id': 'msg-42',
+              'body_src': 'Hello',
+              'author': 'customer',
+            },
+          }),
+        );
+        final client = ChataptorClient.internal(
+          config: _testConfig(),
+          transport: transport,
+        );
+        await client.connect();
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+
+        final messages = <Message>[];
+        client.messages.listen(messages.add);
+
+        await client.sendMessage('Hello');
+
+        transport.inject.event(
+          const MessageReceived(
+            topic: 'conversation:conv1',
+            event: 'message:received',
+            payload: {
+              'message': {
+                'msg_id': 'msg-42',
+                'body_src': 'Hello',
+                'author': 'customer',
+              },
+            },
+          ),
+        );
+
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+
+        expect(messages, isEmpty);
+      },
+    );
+
+    test('does not filter message:received with a different msg_id', () async {
+      final transport = FakeChatTransport();
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      transport.inject.replyFor(
+        topic: 'conversation:conv1',
+        event: 'message:send',
+        result: const PushOk({
+          'message': {
+            'msg_id': 'msg-1',
+            'body_src': 'Hi',
+            'author': 'customer',
+          },
+        }),
+      );
+      final client = ChataptorClient.internal(
+        config: _testConfig(),
+        transport: transport,
+      );
+      await client.connect();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      final messages = <Message>[];
+      client.messages.listen(messages.add);
+
+      await client.sendMessage('Hi');
+
+      transport.inject.event(
+        const MessageReceived(
+          topic: 'conversation:conv1',
+          event: 'message:received',
+          payload: {
+            'message': {
+              'msg_id': 'msg-99',
+              'body_src': 'Different message',
+              'author': 'agent',
+            },
+          },
+        ),
+      );
+
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(messages, hasLength(1));
+      expect(messages.first.id, 'msg-99');
+    });
+  });
 }

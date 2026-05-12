@@ -65,6 +65,11 @@ class ChataptorClient {
   /// Active conversation ID, set after `conversation:create` succeeds.
   String? _conversationId;
 
+  /// Guards against duplicate `message:received` pushes for the same server
+  /// message (caused by a double PubSub subscription on the backend) and
+  /// suppresses the server echo of the customer's own sent messages.
+  final Set<String> _seenMessageIds = {};
+
   String _siteTopic() => 'site:${config.siteId}';
   String _conversationTopic() => 'conversation:$_conversationId';
 
@@ -233,7 +238,7 @@ class ChataptorClient {
     );
 
     return switch (result) {
-      PushOk() => SendSuccess(draft),
+      PushOk(:final response) => _handleSendOk(response, draft),
       PushServerError(:final reason) => SendFailure(
         ServerError('server rejected send: $reason'),
         draft,
@@ -326,9 +331,27 @@ class ChataptorClient {
     }
   }
 
+  SendResult _handleSendOk(Map<String, dynamic> response, MessageDraft draft) {
+    final msgId = _extractMsgId(response);
+    if (msgId != null) _seenMessageIds.add(msgId);
+    return SendSuccess(draft);
+  }
+
+  String? _extractMsgId(Map<String, dynamic> response) {
+    final msg = response['message'];
+    if (msg is! Map) return null;
+    final id = (msg['msg_id'] ?? msg['id'])?.toString();
+    return (id != null && id.isNotEmpty) ? id : null;
+  }
+
   Future<void> _handleMessageReceived(MessageReceived event) async {
     if (event.event != 'message:received') return;
     var message = parseIncomingMessage(event.payload);
+
+    if (message.id.isNotEmpty) {
+      if (_seenMessageIds.contains(message.id)) return;
+      _seenMessageIds.add(message.id);
+    }
 
     final beforeReceive = config.hooks.beforeReceive;
     if (beforeReceive != null) {
