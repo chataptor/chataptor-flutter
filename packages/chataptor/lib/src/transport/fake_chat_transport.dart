@@ -32,6 +32,9 @@ class FakeChatTransportRecorded {
 
   /// Every channel topic that was joined, in order.
   final List<String> joinedChannels = [];
+
+  /// Join params passed alongside each [joinedChannels] entry (same index).
+  final List<Map<String, dynamic>> joinedChannelParams = [];
 }
 
 /// Event-injection API for driving test scenarios.
@@ -119,6 +122,7 @@ class FakeChatTransport implements ChatTransport {
   @override
   Future<void> joinChannel(String topic, Map<String, dynamic> params) async {
     recorded.joinedChannels.add(topic);
+    recorded.joinedChannelParams.add(Map.of(params));
   }
 
   @override

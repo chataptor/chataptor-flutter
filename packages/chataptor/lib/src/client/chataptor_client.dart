@@ -68,6 +68,14 @@ class ChataptorClient {
   String _siteTopic() => 'site:${config.siteId}';
   String _conversationTopic() => 'conversation:$_conversationId';
 
+  Map<String, dynamic> _buildSiteJoinParams() {
+    final lang = config.translation.customerLanguage;
+    if (config.translation.enabled && lang != null) {
+      return {'browser_language': lang};
+    }
+    return {};
+  }
+
   /// Stream of connection state updates.
   Stream<ConnectionState> get connectionState => _connectionState.stream;
 
@@ -99,7 +107,7 @@ class ChataptorClient {
 
     try {
       await _transport.connect(transportConfig);
-      await _transport.joinChannel(_siteTopic(), {});
+      await _transport.joinChannel(_siteTopic(), _buildSiteJoinParams());
     } on Object catch (err, st) {
       config.logger.log(
         ChataptorLogLevel.error,
@@ -119,9 +127,18 @@ class ChataptorClient {
     }
 
     // Create conversation on the site channel and join its dedicated channel.
-    final result = await _transport.push(_siteTopic(), 'conversation:create', {
+    final createPayload = <String, dynamic>{
       'user_agent': 'chataptor-flutter/0.1.0 (flutter)',
-    });
+    };
+    final customerLang = config.translation.customerLanguage;
+    if (config.translation.enabled && customerLang != null) {
+      createPayload['client_language'] = customerLang;
+    }
+    final result = await _transport.push(
+      _siteTopic(),
+      'conversation:create',
+      createPayload,
+    );
 
     switch (result) {
       case PushOk(:final response):
