@@ -128,10 +128,9 @@ void main() {
         await Future<void>.delayed(const Duration(milliseconds: 50));
 
         // Index 0 = site channel join, index 1 = conversation channel join.
-        expect(
-          transport.recorded.joinedChannelParams[0],
-          {'browser_language': 'pl'},
-        );
+        expect(transport.recorded.joinedChannelParams[0], {
+          'browser_language': 'pl',
+        });
       },
     );
 
@@ -193,10 +192,7 @@ void main() {
         final createPush = transport.recorded.pushes.firstWhere(
           (p) => p.event == 'conversation:create',
         );
-        expect(
-          createPush.payload.containsKey('client_language'),
-          isFalse,
-        );
+        expect(createPush.payload.containsKey('client_language'), isFalse);
       },
     );
   });
