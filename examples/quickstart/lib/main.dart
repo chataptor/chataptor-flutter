@@ -4,11 +4,24 @@ import 'package:flutter/material.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Replace with your real site credentials from the Chataptor admin console.
+  // Supply credentials via --dart-define at run time (never hard-code them):
+  //   flutter run \
+  //     --dart-define=CHATAPTOR_SITE_ID=<your-site-id> \
+  //     --dart-define=CHATAPTOR_WIDGET_KEY=<your-widget-key>
+  //
+  // See examples/quickstart/run_local.ps1.example for a ready-made script.
+  const siteId = String.fromEnvironment(
+    'CHATAPTOR_SITE_ID',
+    defaultValue: 'YOUR_SITE_ID',
+  );
+  const widgetKey = String.fromEnvironment(
+    'CHATAPTOR_WIDGET_KEY',
+    defaultValue: 'YOUR_WIDGET_KEY',
+  );
   await Chataptor.init(
     config: ChataptorConfig(
-      siteId: 'YOUR_SITE_ID',
-      widgetKey: 'YOUR_WIDGET_KEY',
+      siteId: siteId,
+      widgetKey: widgetKey,
       // apiUrl defaults to https://chataptor.com
       logger: _DebugLogger(),
     ),

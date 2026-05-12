@@ -1,0 +1,6 @@
+# Copy this file to run_local.ps1 (gitignored) and fill in your credentials.
+# Run from the quickstart directory: .\run_local.ps1
+
+flutter run `
+  --dart-define=CHATAPTOR_SITE_ID=YOUR_SITE_ID `
+  --dart-define=CHATAPTOR_WIDGET_KEY=YOUR_WIDGET_KEY

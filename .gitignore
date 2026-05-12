@@ -69,6 +69,11 @@ $RECYCLE.BIN/
 .env.local
 .env.*.local
 
+# Local run scripts with real credentials (use run_local.*.example as template)
+run_local.sh
+run_local.ps1
+run_local.bat
+
 # Git worktrees
 .worktrees/
 
