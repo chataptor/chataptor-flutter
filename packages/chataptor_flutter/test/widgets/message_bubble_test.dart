@@ -56,14 +56,18 @@ void main() {
     expect(containers.length >= 2, isTrue);
   });
 
-  testWidgets('renders translation label when translation present', (
+  testWidgets('renders translation label for agent message with translation', (
     tester,
   ) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           body: ChataptorMessageBubble(
-            message: _message(body: 'Hello', translated: 'Cześć'),
+            message: _message(
+              author: MessageAuthor.agent,
+              body: 'Hello',
+              translated: 'Cześć',
+            ),
           ),
         ),
       ),
@@ -71,6 +75,29 @@ void main() {
     expect(find.text('Cześć'), findsOneWidget);
     expect(find.textContaining('en'), findsOneWidget);
   });
+
+  testWidgets(
+    'does not show translation for customer message even when bodyTranslated'
+    ' is set',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ChataptorMessageBubble(
+              message: _message(
+                body: 'Dzień dobry',
+                translated: 'Good morning',
+              ),
+            ),
+          ),
+        ),
+      );
+      // Source body always visible.
+      expect(find.text('Dzień dobry'), findsOneWidget);
+      // Translation must NOT be shown for customer's own messages.
+      expect(find.text('Good morning'), findsNothing);
+    },
+  );
 
   testWidgets('has a Semantics label', (tester) async {
     await tester.pumpWidget(

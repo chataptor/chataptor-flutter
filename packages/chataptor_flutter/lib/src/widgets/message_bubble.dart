@@ -57,7 +57,12 @@ class ChataptorMessageBubble extends StatelessWidget {
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: _buildContent(effectiveTheme, loc, fg),
+                      children: _buildContent(
+                        effectiveTheme,
+                        loc,
+                        fg,
+                        fromCustomer,
+                      ),
                     ),
                   ),
                 ),
@@ -73,6 +78,7 @@ class ChataptorMessageBubble extends StatelessWidget {
     ChataptorTheme theme,
     ChataptorLocalizations loc,
     Color foreground,
+    bool fromCustomer,
   ) {
     final widgets = <Widget>[
       Text(
@@ -82,7 +88,7 @@ class ChataptorMessageBubble extends StatelessWidget {
     ];
 
     final translated = message.bodyTranslated;
-    if (translated != null && translated.isNotEmpty) {
+    if (translated != null && translated.isNotEmpty && !fromCustomer) {
       final lang = message.sourceLanguage ?? '';
       widgets
         ..add(const SizedBox(height: 6))
