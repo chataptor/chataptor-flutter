@@ -73,14 +73,36 @@ class _Home extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Chataptor Quickstart')),
       body: Center(
-        child: FilledButton.icon(
-          icon: const Icon(Icons.support_agent),
-          label: const Text('Open chat'),
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ChataptorChatScreen()),
-            );
-          },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FilledButton.icon(
+              icon: const Icon(Icons.support_agent),
+              label: const Text('Open chat'),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const ChataptorChatScreen(),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.delete_sweep_outlined),
+              label: const Text('New conversation (clear session)'),
+              onPressed: () async {
+                await Chataptor.instance.clearSession();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Session cleared — next chat opens fresh'),
+                    ),
+                  );
+                }
+              },
+            ),
+          ],
         ),
       ),
     );
