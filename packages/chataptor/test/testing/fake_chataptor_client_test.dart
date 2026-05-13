@@ -83,5 +83,19 @@ void main() {
       await fake.disconnect();
       expect(fake.currentConnectionState, isA<Disconnected>());
     });
+
+    test(
+      'clearSession() records the call and transitions to Disconnected',
+      () async {
+        final fake = FakeChataptorClient();
+        await fake.connect();
+        expect(fake.currentConnectionState, const Connected());
+
+        await fake.clearSession();
+
+        expect(fake.currentConnectionState, isA<Disconnected>());
+        expect(fake.recorded.clearSessionCalls, 1);
+      },
+    );
   });
 }

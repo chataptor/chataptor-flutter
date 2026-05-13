@@ -253,6 +253,19 @@ class ChataptorClient {
     };
   }
 
+  /// Clears the local session: deletes the stored guest ID and disconnects if
+  /// currently connected. The next [connect] call will create a new anonymous
+  /// identity and open a fresh conversation on the backend.
+  ///
+  /// Use this when the customer explicitly wants to start a new support thread,
+  /// or when a merchant-defined session expiry has elapsed.
+  Future<void> clearSession() async {
+    _requireNotDisposed();
+    await disconnect();
+    await _guestIdStore.clear();
+    _seenMessageIds.clear();
+  }
+
   /// Releases every resource. After [dispose] the client is unusable.
   Future<void> dispose() async {
     if (_disposed) return;

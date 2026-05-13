@@ -520,4 +520,59 @@ void main() {
       },
     );
   });
+
+  group('ChataptorClient session management', () {
+    test('clearSession() removes guestId from storage', () async {
+      final transport = FakeChatTransport();
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      final storage = InMemoryChataptorStorage();
+      final client = ChataptorClient.internal(
+        config: _testConfig(),
+        transport: transport,
+        storage: storage,
+      );
+
+      await client.connect();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      // guestId must have been written during connect().
+      expect(
+        await storage.readString('chataptor.guest_id.abc'),
+        isNotNull,
+      );
+
+      await client.clearSession();
+
+      expect(await storage.readString('chataptor.guest_id.abc'), isNull);
+    });
+
+    test('clearSession() disconnects when currently connected', () async {
+      final transport = FakeChatTransport();
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      final client = ChataptorClient.internal(
+        config: _testConfig(),
+        transport: transport,
+      );
+      await client.connect();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(client.currentConnectionState, isA<Connected>());
+
+      await client.clearSession();
+
+      expect(client.currentConnectionState, isA<Disconnected>());
+    });
+
+    test('clearSession() is safe when already disconnected', () async {
+      final transport = FakeChatTransport();
+      final client = ChataptorClient.internal(
+        config: _testConfig(),
+        transport: transport,
+      );
+
+      // Must not throw.
+      await client.clearSession();
+
+      expect(client.currentConnectionState, isA<Disconnected>());
+    });
+  });
 }

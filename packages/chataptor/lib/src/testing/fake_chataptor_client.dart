@@ -22,6 +22,9 @@ class FakeChataptorClientRecorded {
 
   /// Every `disconnect()` call.
   int disconnectCalls = 0;
+
+  /// Every `clearSession()` call.
+  int clearSessionCalls = 0;
 }
 
 /// Scripting API for a [FakeChataptorClient].
@@ -134,6 +137,14 @@ class FakeChataptorClient implements ChataptorClient {
       );
     }
     return _scriptedSends.removeAt(0);
+  }
+
+  @override
+  Future<void> clearSession() async {
+    recorded.clearSessionCalls += 1;
+    if (currentConnectionState is! Disconnected) {
+      await disconnect();
+    }
   }
 
   @override
