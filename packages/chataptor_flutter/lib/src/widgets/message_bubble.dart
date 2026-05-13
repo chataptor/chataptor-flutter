@@ -1,5 +1,4 @@
 import 'package:chataptor/chataptor.dart';
-import 'package:chataptor_flutter/src/l10n/chataptor_localizations.dart';
 import 'package:chataptor_flutter/src/theme/chataptor_theme.dart';
 import 'package:flutter/material.dart';
 
@@ -20,7 +19,6 @@ class ChataptorMessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final effectiveTheme = theme ?? ChataptorTheme.matching(context);
-    final loc = ChataptorLocalizations.of(context);
     final fromCustomer = message.author == MessageAuthor.customer;
     final bg = fromCustomer
         ? effectiveTheme.customerBubbleColor
@@ -57,12 +55,7 @@ class ChataptorMessageBubble extends StatelessWidget {
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: _buildContent(
-                        effectiveTheme,
-                        loc,
-                        fg,
-                        fromCustomer,
-                      ),
+                      children: _buildContent(effectiveTheme, fg, fromCustomer),
                     ),
                   ),
                 ),
@@ -76,43 +69,29 @@ class ChataptorMessageBubble extends StatelessWidget {
 
   List<Widget> _buildContent(
     ChataptorTheme theme,
-    ChataptorLocalizations loc,
     Color foreground,
     bool fromCustomer,
   ) {
-    final widgets = <Widget>[
+    return [
       Text(
-        message.body,
+        _displayBody(fromCustomer),
         style: theme.bodyTextStyle.copyWith(color: foreground),
       ),
     ];
+  }
 
-    final translated = message.bodyTranslated;
-    if (translated != null && translated.isNotEmpty && !fromCustomer) {
-      final lang = message.sourceLanguage ?? '';
-      widgets
-        ..add(const SizedBox(height: 6))
-        ..add(
-          Text(
-            translated,
-            style: theme.bodyTextStyle.copyWith(
-              color: foreground.withValues(alpha: 0.8),
-            ),
-          ),
-        )
-        ..add(const SizedBox(height: 2))
-        ..add(
-          Text(
-            loc.translatedLabel.replaceFirst('{language}', lang),
-            style: theme.translationLabelStyle,
-          ),
-        );
+  /// Returns the text to display: translated body for agent/bot messages when
+  /// a translation is available, otherwise the source body.
+  String _displayBody(bool fromCustomer) {
+    if (!fromCustomer) {
+      final t = message.bodyTranslated;
+      if (t != null && t.isNotEmpty) return t;
     }
-    return widgets;
+    return message.body;
   }
 
   String _buildSemanticsLabel(bool fromCustomer) {
     final who = fromCustomer ? 'Sent' : 'Received';
-    return '$who message: ${message.body}';
+    return '$who message: ${_displayBody(fromCustomer)}';
   }
 }

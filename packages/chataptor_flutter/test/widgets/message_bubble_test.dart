@@ -56,7 +56,7 @@ void main() {
     expect(containers.length >= 2, isTrue);
   });
 
-  testWidgets('renders translation label for agent message with translation', (
+  testWidgets('agent message with translation shows only translated body', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -72,8 +72,11 @@ void main() {
         ),
       ),
     );
+    // Only the translated text is shown.
     expect(find.text('Cześć'), findsOneWidget);
-    expect(find.textContaining('en'), findsOneWidget);
+    expect(find.text('Hello'), findsNothing);
+    // No "Translated from" label — seamless translation is the product.
+    expect(find.textContaining('Translated'), findsNothing);
   });
 
   testWidgets(
