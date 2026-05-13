@@ -536,10 +536,7 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 50));
 
       // guestId must have been written during connect().
-      expect(
-        await storage.readString('chataptor.guest_id.abc'),
-        isNotNull,
-      );
+      expect(await storage.readString('chataptor.guest_id.abc'), isNotNull);
 
       await client.clearSession();
 
