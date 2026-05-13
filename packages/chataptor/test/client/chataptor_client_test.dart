@@ -333,4 +333,191 @@ void main() {
       expect(messages.first.id, 'msg-99');
     });
   });
+
+  group('ChataptorClient history loading', () {
+    test('connect() emits history messages from conversation channel join'
+        ' response', () async {
+      final transport = FakeChatTransport();
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      transport.inject.joinPayload('conversation:conv1', {
+        'messages': [
+          {
+            'msg_id': 10,
+            'conv_id': 1,
+            'body_src': 'Hej, jak mogę pomóc?',
+            'author': 'agent',
+            'inserted_at': '2026-05-12T10:00:00Z',
+            'delivery_channel': 'websocket',
+          },
+          {
+            'msg_id': 11,
+            'conv_id': 1,
+            'body_src': 'Mam pytanie.',
+            'author': 'customer',
+            'inserted_at': '2026-05-12T10:01:00Z',
+            'delivery_channel': 'websocket',
+          },
+        ],
+      });
+
+      final client = ChataptorClient.internal(
+        config: _testConfig(),
+        transport: transport,
+      );
+
+      final received = <Message>[];
+      client.messages.listen(received.add);
+
+      await client.connect();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(received, hasLength(2));
+      expect(received[0].id, '10');
+      expect(received[0].body, 'Hej, jak mogę pomóc?');
+      expect(received[0].author, MessageAuthor.agent);
+      expect(received[1].id, '11');
+      expect(received[1].body, 'Mam pytanie.');
+      expect(received[1].author, MessageAuthor.customer);
+    });
+
+    test(
+      'history message IDs are added to seen set — subsequent message:received'
+      ' with same ID is deduplicated',
+      () async {
+        final transport = FakeChatTransport();
+        transport.inject.conversationCreated('site:abc', 'conv1');
+        transport.inject.joinPayload('conversation:conv1', {
+          'messages': [
+            {
+              'msg_id': 99,
+              'conv_id': 1,
+              'body_src': 'Old message',
+              'author': 'agent',
+              'inserted_at': '2026-05-12T09:00:00Z',
+              'delivery_channel': 'websocket',
+            },
+          ],
+        });
+
+        final client = ChataptorClient.internal(
+          config: _testConfig(),
+          transport: transport,
+        );
+
+        final received = <Message>[];
+        client.messages.listen(received.add);
+
+        await client.connect();
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+
+        // History emitted — 1 message.
+        expect(received, hasLength(1));
+
+        // PubSub echo with same msg_id arrives → must be deduplicated.
+        transport.inject.event(
+          const MessageReceived(
+            topic: 'conversation:conv1',
+            event: 'message:received',
+            payload: {
+              'message': {
+                'msg_id': 99,
+                'body_src': 'Old message',
+                'author': 'agent',
+              },
+            },
+          ),
+        );
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+
+        expect(received, hasLength(1));
+      },
+    );
+
+    test(
+      'connect() with empty messages list in join response emits nothing',
+      () async {
+        final transport = FakeChatTransport();
+        transport.inject.conversationCreated('site:abc', 'conv1');
+        transport.inject.joinPayload('conversation:conv1', {
+          'messages': <Map<String, dynamic>>[],
+        });
+
+        final client = ChataptorClient.internal(
+          config: _testConfig(),
+          transport: transport,
+        );
+
+        final received = <Message>[];
+        client.messages.listen(received.add);
+
+        await client.connect();
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+
+        expect(received, isEmpty);
+      },
+    );
+
+    test(
+      'connect() with no messages key in join response emits nothing',
+      () async {
+        final transport = FakeChatTransport();
+        transport.inject.conversationCreated('site:abc', 'conv1');
+        // No joinPayload set → FakeChatTransport returns {} by default.
+
+        final client = ChataptorClient.internal(
+          config: _testConfig(),
+          transport: transport,
+        );
+
+        final received = <Message>[];
+        client.messages.listen(received.add);
+
+        await client.connect();
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+
+        expect(received, isEmpty);
+      },
+    );
+
+    test(
+      'history messages with translation sub-object expose bodyTranslated',
+      () async {
+        final transport = FakeChatTransport();
+        transport.inject.conversationCreated('site:abc', 'conv1');
+        transport.inject.joinPayload('conversation:conv1', {
+          'messages': [
+            {
+              'msg_id': 5,
+              'conv_id': 1,
+              'body_src': 'Dzień dobry',
+              'author': 'agent',
+              'inserted_at': '2026-05-12T09:00:00Z',
+              'delivery_channel': 'websocket',
+              'translation': {
+                'translatedText': 'Good morning',
+                'sourceLanguage': 'pl',
+                'targetLanguage': 'en',
+              },
+            },
+          ],
+        });
+
+        final client = ChataptorClient.internal(
+          config: _testConfig(),
+          transport: transport,
+        );
+
+        final received = <Message>[];
+        client.messages.listen(received.add);
+
+        await client.connect();
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+
+        expect(received, hasLength(1));
+        expect(received.first.bodyTranslated, 'Good morning');
+        expect(received.first.sourceLanguage, 'pl');
+        expect(received.first.targetLanguage, 'en');
+      },
+    );
+  });
 }

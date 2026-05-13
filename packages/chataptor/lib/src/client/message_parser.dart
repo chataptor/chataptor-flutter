@@ -15,9 +15,19 @@ Message parseIncomingMessage(Map<String, dynamic> payload) {
   final id = (raw['msg_id'] ?? raw['id'] ?? '').toString();
   final convId = (raw['conv_id'] ?? raw['conversation_id'] ?? '').toString();
   final body = (raw['body_src'] ?? raw['body'] ?? '').toString();
-  final bodyTranslated = raw['body_translated'] as String?;
-  final sourceLanguage = raw['source_language'] as String?;
-  final targetLanguage = raw['target_language'] as String?;
+  // Backend stores translations in message_translations table and serializes
+  // them as a `translation` sub-object. The top-level `body_translated` is
+  // only set by legacy paths, so fall back to the sub-object when absent.
+  final translationSub = raw['translation'] as Map?;
+  final bodyTranslated =
+      (raw['body_translated'] as String?) ??
+      (translationSub?['translatedText'] as String?);
+  final sourceLanguage =
+      (raw['source_language'] as String?) ??
+      (translationSub?['sourceLanguage'] as String?);
+  final targetLanguage =
+      (raw['target_language'] as String?) ??
+      (translationSub?['targetLanguage'] as String?);
   final author = _parseAuthor(raw['author']);
   final timestamp = _parseTimestamp(raw['inserted_at'] ?? raw['timestamp']);
   final channel = _parseChannel(raw['delivery_channel']);

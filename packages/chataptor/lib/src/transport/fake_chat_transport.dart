@@ -63,6 +63,13 @@ class FakeChatTransportInject {
         .add(result);
   }
 
+  /// Registers the payload that [FakeChatTransport.joinChannel] returns for
+  /// the given [topic]. Used to simulate the Phoenix channel join response
+  /// (e.g. `{messages: [...]}` for conversation channels).
+  void joinPayload(String topic, Map<String, dynamic> payload) {
+    _transport._joinPayloads[topic] = payload;
+  }
+
   /// Registers a [PushOk] reply for `conversation:create` on [siteTopic].
   ///
   /// [convId] becomes both `conversationId` and `conv_id` in the response,
@@ -93,6 +100,7 @@ class FakeChatTransport implements ChatTransport {
   final _stateController =
       StreamController<TransportConnectionState>.broadcast();
   final Map<String, List<PushResult>> _replyQueue = {};
+  final Map<String, Map<String, dynamic>> _joinPayloads = {};
 
   /// Event injection API.
   late final FakeChatTransportInject inject;
@@ -120,9 +128,13 @@ class FakeChatTransport implements ChatTransport {
   }
 
   @override
-  Future<void> joinChannel(String topic, Map<String, dynamic> params) async {
+  Future<Map<String, dynamic>> joinChannel(
+    String topic,
+    Map<String, dynamic> params,
+  ) async {
     recorded.joinedChannels.add(topic);
     recorded.joinedChannelParams.add(Map.of(params));
+    return _joinPayloads[topic] ?? {};
   }
 
   @override

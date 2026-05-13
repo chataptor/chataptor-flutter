@@ -25,11 +25,17 @@ abstract interface class ChatTransport {
   /// transport routes subsequent pushes on [topic] via [push] and emits
   /// incoming events through [events].
   ///
+  /// Returns the server's join reply payload (e.g. `{messages: [...]}` for
+  /// the conversation channel). Callers may ignore it when not needed.
+  ///
   /// Implementations MUST:
   /// - Complete successfully only after the channel has been joined (reply
   ///   received).
   /// - Throw a plain [Exception] if the server rejects the join.
-  Future<void> joinChannel(String topic, Map<String, dynamic> params);
+  Future<Map<String, dynamic>> joinChannel(
+    String topic,
+    Map<String, dynamic> params,
+  );
 
   /// Pushes [event] with [payload] to [topic]. Returns a [PushResult]
   /// reflecting the server's reply (or a timeout/disconnect marker).

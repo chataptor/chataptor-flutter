@@ -23,6 +23,7 @@ Future<void> main() async {
       siteId: siteId,
       widgetKey: widgetKey,
       // apiUrl defaults to https://chataptor.com
+      translation: TranslationConfig.auto(customerLanguage: 'pl'),
       logger: _DebugLogger(),
     ),
   );

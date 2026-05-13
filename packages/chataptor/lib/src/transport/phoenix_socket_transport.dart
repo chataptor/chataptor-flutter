@@ -124,9 +124,12 @@ class PhoenixSocketTransport implements ChatTransport {
   }
 
   @override
-  Future<void> joinChannel(String topic, Map<String, dynamic> params) async {
+  Future<Map<String, dynamic>> joinChannel(
+    String topic,
+    Map<String, dynamic> params,
+  ) async {
     final socket = _requireSocket();
-    if (_channels.containsKey(topic)) return;
+    if (_channels.containsKey(topic)) return {};
 
     // addChannel returns an existing channel if the topic was added before;
     // since we guard with containsKey, this is always a fresh channel here.
@@ -163,6 +166,7 @@ class PhoenixSocketTransport implements ChatTransport {
     if (response.isError) {
       throw Exception('Failed to join channel $topic: ${response.response}');
     }
+    return _asMap(response.response);
   }
 
   @override

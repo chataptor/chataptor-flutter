@@ -159,8 +159,9 @@ class ChataptorClient {
           return;
         }
         _conversationId = convId;
+        Map<String, dynamic> joinPayload;
         try {
-          await _transport.joinChannel(_conversationTopic(), {});
+          joinPayload = await _transport.joinChannel(_conversationTopic(), {});
         } on Object catch (err, st) {
           config.logger.log(
             ChataptorLogLevel.error,
@@ -173,6 +174,7 @@ class ChataptorClient {
         }
         _connectionState.add(const Connected());
         config.hooks.onConnectionStateChanged?.call(const Connected());
+        _loadHistory(joinPayload);
 
       case PushServerError(:final reason):
         _emitConnectError('conversation:create rejected by server: $reason');
@@ -362,6 +364,20 @@ class ChataptorClient {
 
     _messages.add(message);
     config.hooks.onMessageReceived?.call(message);
+  }
+
+  void _loadHistory(Map<String, dynamic> joinPayload) {
+    final raw = joinPayload['messages'];
+    if (raw is! List) return;
+    for (final item in raw) {
+      if (item is! Map) continue;
+      final payload = Map<String, dynamic>.from(item);
+      final message = parseIncomingMessage(payload);
+      if (message.id.isNotEmpty) {
+        _seenMessageIds.add(message.id);
+      }
+      _messages.add(message);
+    }
   }
 
   void _requireNotDisposed() {
