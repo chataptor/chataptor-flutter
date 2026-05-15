@@ -139,8 +139,9 @@ void main() {
       );
 
       await tester.pumpWidget(const MaterialApp(home: ChataptorChatScreen()));
-      // First frame — connecting, no messages → spinner shown.
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      // First frame — connecting, no messages → skeleton shown, not spinner.
+      expect(find.byKey(const ValueKey('chataptor-skeleton')), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
       expect(find.textContaining('No messages'), findsNothing);
       // Drain pending timer from FakeChatTransport.connect.
       await tester.pump(const Duration(milliseconds: 100));

@@ -34,7 +34,7 @@ class ChataptorMessageList extends StatelessWidget {
 
     if (messages.isEmpty) {
       if (isLoading) {
-        return const Center(child: CircularProgressIndicator());
+        return const _MessageSkeleton(key: ValueKey('chataptor-skeleton'));
       }
       return Center(
         child: Padding(
@@ -61,6 +61,89 @@ class ChataptorMessageList extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _MessageSkeleton extends StatefulWidget {
+  const _MessageSkeleton({super.key});
+
+  @override
+  State<_MessageSkeleton> createState() => _MessageSkeletonState();
+}
+
+class _MessageSkeletonState extends State<_MessageSkeleton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 900),
+      vsync: this,
+    )..repeat(reverse: true);
+    _opacity = Tween<double>(
+      begin: 0.3,
+      end: 0.8,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _opacity,
+      child: ListView(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        children: const [
+          _SkeletonBubble(widthFactor: 0.62, isLeft: true, height: 44),
+          SizedBox(height: 8),
+          _SkeletonBubble(widthFactor: 0.44, isLeft: false, height: 44),
+          SizedBox(height: 8),
+          _SkeletonBubble(widthFactor: 0.58, isLeft: true, height: 64),
+          SizedBox(height: 8),
+          _SkeletonBubble(widthFactor: 0.40, isLeft: false, height: 44),
+        ],
+      ),
+    );
+  }
+}
+
+class _SkeletonBubble extends StatelessWidget {
+  const _SkeletonBubble({
+    required this.widthFactor,
+    required this.isLeft,
+    required this.height,
+  });
+
+  final double widthFactor;
+  final bool isLeft;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: isLeft ? Alignment.centerLeft : Alignment.centerRight,
+      child: FractionallySizedBox(
+        widthFactor: widthFactor,
+        child: Container(
+          height: height,
+          decoration: BoxDecoration(
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
     );
   }
 }

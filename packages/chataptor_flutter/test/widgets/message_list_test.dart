@@ -41,20 +41,20 @@ void main() {
     expect(find.textContaining('No messages'), findsOneWidget);
   });
 
-  testWidgets(
-    'shows CircularProgressIndicator when isLoading is true and no messages',
-    (tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: ChataptorMessageList(messages: [], isLoading: true),
-          ),
+  testWidgets('shows skeleton loader when isLoading is true and no messages', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: ChataptorMessageList(messages: [], isLoading: true),
         ),
-      );
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      expect(find.textContaining('No messages'), findsNothing);
-    },
-  );
+      ),
+    );
+    expect(find.byKey(const ValueKey('chataptor-skeleton')), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.textContaining('No messages'), findsNothing);
+  });
 
   testWidgets('shows messages even when isLoading is true', (tester) async {
     await tester.pumpWidget(
