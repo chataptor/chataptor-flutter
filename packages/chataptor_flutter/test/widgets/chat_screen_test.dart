@@ -78,6 +78,24 @@ void main() {
     expect(find.textContaining('No messages'), findsOneWidget);
   });
 
+  testWidgets('custom title appears in AppBar', (tester) async {
+    final transport = FakeChatTransport();
+    transport.inject.conversationCreated('site:abc', 'conv1');
+    await Chataptor.init(
+      siteId: 'abc',
+      widgetKey: 'pk_x',
+      apiUrl: Uri.parse('http://localhost:4000'),
+      transport: transport,
+    );
+    await tester.pumpWidget(
+      const MaterialApp(home: ChataptorChatScreen(title: 'Acme Support')),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text('Acme Support'), findsOneWidget);
+    expect(find.text('Chataptor'), findsNothing);
+  });
+
   testWidgets('sending a message updates the list', (tester) async {
     final transport = FakeChatTransport();
     transport.inject.conversationCreated('site:abc', 'conv1');

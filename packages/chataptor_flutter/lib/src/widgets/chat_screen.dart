@@ -14,10 +14,13 @@ import 'package:flutter/material.dart' hide ConnectionState;
 /// stateful connection to the [ChataptorClient] from [ChataptorScope.of].
 class ChataptorChatScreen extends StatefulWidget {
   /// Creates a [ChataptorChatScreen].
-  const ChataptorChatScreen({super.key, this.theme});
+  const ChataptorChatScreen({super.key, this.theme, this.title});
 
   /// Optional theme override.
   final ChataptorTheme? theme;
+
+  /// Title displayed in the AppBar. Defaults to `'Support'` when omitted.
+  final String? title;
 
   @override
   State<ChataptorChatScreen> createState() => _ChataptorChatScreenState();
@@ -88,7 +91,7 @@ class _ChataptorChatScreenState extends State<ChataptorChatScreen> {
       backgroundColor: theme.backgroundColor,
       appBar: AppBar(
         backgroundColor: theme.surfaceColor,
-        title: Text('Chataptor', style: theme.headerTextStyle),
+        title: Text(widget.title ?? 'Support', style: theme.headerTextStyle),
         leading: IconButton(
           icon: const Icon(Icons.close),
           tooltip: loc.closeChat,
