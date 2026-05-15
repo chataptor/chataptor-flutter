@@ -9,13 +9,22 @@ typedef ChataptorComposerSend = Future<void> Function(String text);
 /// call; parent owns the networking via [onSend].
 class ChataptorComposer extends StatefulWidget {
   /// Creates a [ChataptorComposer].
-  const ChataptorComposer({required this.onSend, super.key, this.theme});
+  const ChataptorComposer({
+    required this.onSend,
+    super.key,
+    this.theme,
+    this.enabled = true,
+  });
 
   /// Called when the user taps send on non-empty text.
   final ChataptorComposerSend onSend;
 
   /// Optional theme override.
   final ChataptorTheme? theme;
+
+  /// When `false`, the send button is disabled regardless of input text.
+  /// Use this to prevent sends while the client is connecting or reconnecting.
+  final bool enabled;
 
   @override
   State<ChataptorComposer> createState() => _ChataptorComposerState();
@@ -31,7 +40,8 @@ class _ChataptorComposerState extends State<ChataptorComposer> {
     super.dispose();
   }
 
-  bool get _canSend => !_sending && _controller.text.trim().isNotEmpty;
+  bool get _canSend =>
+      widget.enabled && !_sending && _controller.text.trim().isNotEmpty;
 
   Future<void> _handleSend() async {
     final text = _controller.text.trim();

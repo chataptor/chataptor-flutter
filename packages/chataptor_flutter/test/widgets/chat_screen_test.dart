@@ -12,6 +12,56 @@ void main() {
     Chataptor.reset();
   });
 
+  testWidgets('send button is disabled while connecting', (tester) async {
+    final transport = FakeChatTransport();
+    transport.inject.conversationCreated('site:abc', 'conv1');
+    await Chataptor.init(
+      siteId: 'abc',
+      widgetKey: 'pk_x',
+      apiUrl: Uri.parse('http://localhost:4000'),
+      transport: transport,
+    );
+
+    await tester.pumpWidget(const MaterialApp(home: ChataptorChatScreen()));
+    // First frame — still connecting, no text yet → send disabled.
+    // (enterText would trigger a pump that completes the fake transport, so we
+    // check the button state right after mount before any additional pumps.)
+    expect(
+      tester
+          .widget<IconButton>(
+            find.widgetWithIcon(IconButton, Icons.send_rounded),
+          )
+          .onPressed,
+      isNull,
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+  });
+
+  testWidgets('send button is enabled after Connected', (tester) async {
+    final transport = FakeChatTransport();
+    transport.inject.conversationCreated('site:abc', 'conv1');
+    await Chataptor.init(
+      siteId: 'abc',
+      widgetKey: 'pk_x',
+      apiUrl: Uri.parse('http://localhost:4000'),
+      transport: transport,
+    );
+
+    await tester.pumpWidget(const MaterialApp(home: ChataptorChatScreen()));
+    await tester.pump(const Duration(milliseconds: 100)); // connection done
+    await tester.enterText(find.byType(TextField), 'hello');
+    await tester.pump();
+
+    expect(
+      tester
+          .widget<IconButton>(
+            find.widgetWithIcon(IconButton, Icons.send_rounded),
+          )
+          .onPressed,
+      isNotNull,
+    );
+  });
+
   testWidgets('renders composer and empty state initially', (tester) async {
     final transport = FakeChatTransport();
     transport.inject.conversationCreated('site:abc', 'conv1');

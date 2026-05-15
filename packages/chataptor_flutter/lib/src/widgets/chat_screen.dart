@@ -29,6 +29,7 @@ class _ChataptorChatScreenState extends State<ChataptorChatScreen> {
   StreamSubscription<ConnectionState>? _connectionStateSub;
   bool _connectStarted = false;
   bool _isLoading = true;
+  bool _canSendMessage = false;
   ChataptorClient? _ownedClient;
 
   @override
@@ -46,8 +47,12 @@ class _ChataptorChatScreenState extends State<ChataptorChatScreen> {
 
     _connectionStateSub = client.connectionState.listen((state) {
       final loading = state is Connecting || state is Reconnecting;
-      if (mounted && loading != _isLoading) {
-        setState(() => _isLoading = loading);
+      final canSend = state is Connected;
+      if (mounted && (loading != _isLoading || canSend != _canSendMessage)) {
+        setState(() {
+          _isLoading = loading;
+          _canSendMessage = canSend;
+        });
       }
     });
     _messagesSub = client.messages.listen((m) {
@@ -101,7 +106,9 @@ class _ChataptorChatScreenState extends State<ChataptorChatScreen> {
           ),
           ChataptorComposer(
             theme: theme,
+            enabled: _canSendMessage,
             onSend: (text) async {
+              if (client.currentConnectionState is! Connected) return;
               final result = await client.sendMessage(text);
               if (result is SendSuccess) {
                 // Optimistically render the sent draft as a message.

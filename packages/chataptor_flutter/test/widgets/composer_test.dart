@@ -47,4 +47,21 @@ void main() {
     final sendButton = tester.widget<IconButton>(find.byType(IconButton));
     expect(sendButton.onPressed, isNull);
   });
+
+  testWidgets('send button is disabled when enabled is false even with text', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ChataptorComposer(enabled: false, onSend: (_) async {}),
+        ),
+      ),
+    );
+    await tester.enterText(find.byType(TextField), 'hello');
+    await tester.pump();
+
+    final sendButton = tester.widget<IconButton>(find.byType(IconButton));
+    expect(sendButton.onPressed, isNull);
+  });
 }
