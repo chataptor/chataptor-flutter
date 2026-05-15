@@ -70,6 +70,12 @@ class ChataptorClient {
   /// suppresses the server echo of the customer's own sent messages.
   final Set<String> _seenMessageIds = {};
 
+  /// In-memory cache of all messages received in this session (history +
+  /// real-time). Persists across disconnect/reconnect cycles so the UI can
+  /// show messages immediately on re-entry without a visible empty-state flash.
+  /// Cleared only by [clearSession].
+  final List<Message> _messageHistory = [];
+
   String _siteTopic() => 'site:${config.siteId}';
   String _conversationTopic() => 'conversation:$_conversationId';
 
@@ -80,6 +86,15 @@ class ChataptorClient {
     }
     return {};
   }
+
+  /// Snapshot of all messages received in this session, sorted oldest-first.
+  ///
+  /// Persists across [disconnect]/[connect] cycles. Use this to initialise a
+  /// message list widget immediately on mount — the UI avoids an empty-state
+  /// flash even when the user navigates away and back. The list is cleared by
+  /// [clearSession] and returns to empty after [dispose].
+  List<Message> get currentMessages =>
+      List<Message>.unmodifiable(_messageHistory);
 
   /// Stream of connection state updates.
   Stream<ConnectionState> get connectionState => _connectionState.stream;
@@ -199,6 +214,13 @@ class ChataptorClient {
     if (_disposed) return;
     await _transport.disconnect();
     _conversationId = null;
+    // Rebuild seen IDs from the message buffer so that history dedup works
+    // correctly on the next connect() without re-emitting already-cached
+    // messages to the stream, while still surfacing any new messages that
+    // arrived while the socket was closed.
+    _seenMessageIds
+      ..clear()
+      ..addAll(_messageHistory.map((m) => m.id).where((id) => id.isNotEmpty));
     _connectionState.add(const Disconnected(DisconnectReason.userRequested));
   }
 
@@ -264,6 +286,7 @@ class ChataptorClient {
     await disconnect();
     await _guestIdStore.clear();
     _seenMessageIds.clear();
+    _messageHistory.clear();
   }
 
   /// Releases every resource. After [dispose] the client is unusable.
@@ -375,6 +398,7 @@ class ChataptorClient {
       message = modified;
     }
 
+    _messageHistory.add(message);
     _messages.add(message);
     config.hooks.onMessageReceived?.call(message);
   }
@@ -387,8 +411,10 @@ class ChataptorClient {
       final payload = Map<String, dynamic>.from(item);
       final message = parseIncomingMessage(payload);
       if (message.id.isNotEmpty) {
+        if (_seenMessageIds.contains(message.id)) continue;
         _seenMessageIds.add(message.id);
       }
+      _messageHistory.add(message);
       _messages.add(message);
     }
   }

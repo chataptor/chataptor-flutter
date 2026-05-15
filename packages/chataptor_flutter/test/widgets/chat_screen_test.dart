@@ -76,6 +76,71 @@ void main() {
     expect(Chataptor.instance.currentConnectionState, isA<Disconnected>());
   });
 
+  testWidgets(
+    'shows loading indicator instead of empty state while connecting',
+    (tester) async {
+      final transport = FakeChatTransport();
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      await Chataptor.init(
+        siteId: 'abc',
+        widgetKey: 'pk_x',
+        apiUrl: Uri.parse('http://localhost:4000'),
+        transport: transport,
+      );
+
+      await tester.pumpWidget(const MaterialApp(home: ChataptorChatScreen()));
+      // First frame — connecting, no messages → spinner shown.
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.textContaining('No messages'), findsNothing);
+      // Drain pending timer from FakeChatTransport.connect.
+      await tester.pump(const Duration(milliseconds: 100));
+    },
+  );
+
+  testWidgets(
+    'shows cached messages immediately on second mount — no empty flash',
+    (tester) async {
+      final transport = FakeChatTransport();
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      transport.inject.joinPayload('conversation:conv1', {
+        'messages': [
+          {
+            'msg_id': 5,
+            'conv_id': 'c1',
+            'body_src': 'Cześć!',
+            'author': 'agent',
+            'inserted_at': '2026-05-12T10:00:00Z',
+            'delivery_channel': 'websocket',
+          },
+        ],
+      });
+
+      await Chataptor.init(
+        siteId: 'abc',
+        widgetKey: 'pk_x',
+        apiUrl: Uri.parse('http://localhost:4000'),
+        transport: transport,
+      );
+
+      // First mount — load history.
+      await tester.pumpWidget(const MaterialApp(home: ChataptorChatScreen()));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.text('Cześć!'), findsOneWidget);
+
+      // Navigate away — lazy mode disconnects.
+      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Second mount — first rendered frame must show cached messages.
+      await tester.pumpWidget(const MaterialApp(home: ChataptorChatScreen()));
+      expect(find.text('Cześć!'), findsOneWidget);
+      expect(find.textContaining('No messages'), findsNothing);
+      // Drain pending timer from the second connect().
+      await tester.pump(const Duration(milliseconds: 100));
+    },
+  );
+
   testWidgets('foregroundActive mode does NOT disconnect on dispose', (
     tester,
   ) async {

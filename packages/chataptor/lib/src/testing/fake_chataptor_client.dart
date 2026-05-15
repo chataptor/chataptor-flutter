@@ -33,8 +33,12 @@ class FakeChataptorClientInject {
 
   final FakeChataptorClient _client;
 
-  /// Emits [message] to listeners on `messages`.
-  void message(Message message) => _client._messages.add(message);
+  /// Emits [message] to listeners on `messages` and appends it to
+  /// [FakeChataptorClient.currentMessages].
+  void message(Message message) {
+    _client._messageHistory.add(message);
+    _client._messages.add(message);
+  }
 
   /// Transitions the fake into [state] and emits to `connectionState`.
   void connectionState(ConnectionState state) {
@@ -82,6 +86,7 @@ class FakeChataptorClient implements ChataptorClient {
   ConnectionState? _currentConnectionState;
 
   final ValueStream<AgentInfo> _agent = ValueStream<AgentInfo>();
+  final List<Message> _messageHistory = [];
   final StreamController<Message> _messages =
       StreamController<Message>.broadcast();
   final StreamController<ChataptorError> _errors =
@@ -100,6 +105,10 @@ class FakeChataptorClient implements ChataptorClient {
 
   @override
   ConnectionState? get currentConnectionState => _currentConnectionState;
+
+  @override
+  List<Message> get currentMessages =>
+      List<Message>.unmodifiable(_messageHistory);
 
   @override
   Stream<Message> get messages => _messages.stream;
@@ -142,6 +151,7 @@ class FakeChataptorClient implements ChataptorClient {
   @override
   Future<void> clearSession() async {
     recorded.clearSessionCalls += 1;
+    _messageHistory.clear();
     if (currentConnectionState is! Disconnected) {
       await disconnect();
     }

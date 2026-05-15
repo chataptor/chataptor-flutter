@@ -572,4 +572,183 @@ void main() {
       expect(client.currentConnectionState, isA<Disconnected>());
     });
   });
+
+  group('ChataptorClient currentMessages buffer', () {
+    test('currentMessages is empty before any connect', () {
+      final transport = FakeChatTransport();
+      final client = ChataptorClient.internal(
+        config: _testConfig(),
+        transport: transport,
+      );
+      expect(client.currentMessages, isEmpty);
+    });
+
+    test('currentMessages contains history messages after connect', () async {
+      final transport = FakeChatTransport();
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      transport.inject.joinPayload('conversation:conv1', {
+        'messages': [
+          {
+            'msg_id': 10,
+            'conv_id': 1,
+            'body_src': 'Hej!',
+            'author': 'agent',
+            'inserted_at': '2026-05-12T10:00:00Z',
+            'delivery_channel': 'websocket',
+          },
+          {
+            'msg_id': 11,
+            'conv_id': 1,
+            'body_src': 'Dzień dobry',
+            'author': 'customer',
+            'inserted_at': '2026-05-12T10:01:00Z',
+            'delivery_channel': 'websocket',
+          },
+        ],
+      });
+      final client = ChataptorClient.internal(
+        config: _testConfig(),
+        transport: transport,
+      );
+      await client.connect();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(client.currentMessages, hasLength(2));
+      expect(client.currentMessages[0].id, '10');
+      expect(client.currentMessages[1].id, '11');
+    });
+
+    test(
+      'currentMessages appends real-time messages from message:received',
+      () async {
+        final transport = FakeChatTransport();
+        transport.inject.conversationCreated('site:abc', 'conv1');
+        final client = ChataptorClient.internal(
+          config: _testConfig(),
+          transport: transport,
+        );
+        await client.connect();
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+
+        transport.inject.event(
+          const MessageReceived(
+            topic: 'conversation:conv1',
+            event: 'message:received',
+            payload: {
+              'message': {
+                'msg_id': 'rt-1',
+                'body_src': 'Real-time message',
+                'author': 'agent',
+              },
+            },
+          ),
+        );
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+
+        expect(client.currentMessages, hasLength(1));
+        expect(client.currentMessages.first.id, 'rt-1');
+      },
+    );
+
+    test(
+      'currentMessages survives disconnect — not cleared between sessions',
+      () async {
+        final transport = FakeChatTransport();
+        transport.inject.conversationCreated('site:abc', 'conv1');
+        transport.inject.joinPayload('conversation:conv1', {
+          'messages': [
+            {
+              'msg_id': 20,
+              'conv_id': 1,
+              'body_src': 'Cached message',
+              'author': 'agent',
+              'inserted_at': '2026-05-12T10:00:00Z',
+              'delivery_channel': 'websocket',
+            },
+          ],
+        });
+        final client = ChataptorClient.internal(
+          config: _testConfig(),
+          transport: transport,
+        );
+        await client.connect();
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        expect(client.currentMessages, hasLength(1));
+
+        await client.disconnect();
+
+        expect(client.currentMessages, hasLength(1));
+      },
+    );
+
+    test('clearSession clears the message history buffer', () async {
+      final transport = FakeChatTransport();
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      transport.inject.joinPayload('conversation:conv1', {
+        'messages': [
+          {
+            'msg_id': 30,
+            'conv_id': 1,
+            'body_src': 'To be cleared',
+            'author': 'agent',
+            'inserted_at': '2026-05-12T10:00:00Z',
+            'delivery_channel': 'websocket',
+          },
+        ],
+      });
+      final client = ChataptorClient.internal(
+        config: _testConfig(),
+        transport: transport,
+      );
+      await client.connect();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(client.currentMessages, hasLength(1));
+
+      await client.clearSession();
+
+      expect(client.currentMessages, isEmpty);
+    });
+
+    test(
+      'on reconnect, history already in buffer is not re-emitted to stream',
+      () async {
+        final transport = FakeChatTransport();
+        transport.inject.conversationCreated('site:abc', 'conv1');
+        transport.inject.conversationCreated('site:abc', 'conv1');
+        transport.inject.joinPayload('conversation:conv1', {
+          'messages': [
+            {
+              'msg_id': 40,
+              'conv_id': 1,
+              'body_src': 'Persistent message',
+              'author': 'agent',
+              'inserted_at': '2026-05-12T10:00:00Z',
+              'delivery_channel': 'websocket',
+            },
+          ],
+        });
+
+        final client = ChataptorClient.internal(
+          config: _testConfig(),
+          transport: transport,
+        );
+
+        final streamMessages = <Message>[];
+        client.messages.listen(streamMessages.add);
+
+        await client.connect();
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        expect(streamMessages, hasLength(1));
+        expect(client.currentMessages, hasLength(1));
+
+        await client.disconnect();
+
+        await client.connect();
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+
+        expect(client.currentMessages, hasLength(1));
+        expect(streamMessages, hasLength(1));
+      },
+    );
+  });
 }

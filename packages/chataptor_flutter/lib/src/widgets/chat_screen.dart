@@ -6,7 +6,7 @@ import 'package:chataptor_flutter/src/scope.dart';
 import 'package:chataptor_flutter/src/theme/chataptor_theme.dart';
 import 'package:chataptor_flutter/src/widgets/composer.dart';
 import 'package:chataptor_flutter/src/widgets/message_list.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ConnectionState;
 
 /// Full-screen chat UI. Pushed via `Navigator.push` or used as a body.
 ///
@@ -26,7 +26,9 @@ class ChataptorChatScreen extends StatefulWidget {
 class _ChataptorChatScreenState extends State<ChataptorChatScreen> {
   final List<Message> _messages = [];
   StreamSubscription<Message>? _messagesSub;
+  StreamSubscription<ConnectionState>? _connectionStateSub;
   bool _connectStarted = false;
+  bool _isLoading = true;
   ChataptorClient? _ownedClient;
 
   @override
@@ -36,6 +38,18 @@ class _ChataptorChatScreenState extends State<ChataptorChatScreen> {
     _connectStarted = true;
     final client = ChataptorScope.of(context).client;
     _ownedClient = client;
+
+    // Populate from cache immediately so there is no empty-state flash on
+    // re-entry. The stream subscription below only delivers truly new messages
+    // (history dedup happens at the client level via _seenMessageIds).
+    _messages.addAll(client.currentMessages);
+
+    _connectionStateSub = client.connectionState.listen((state) {
+      final loading = state is Connecting || state is Reconnecting;
+      if (mounted && loading != _isLoading) {
+        setState(() => _isLoading = loading);
+      }
+    });
     _messagesSub = client.messages.listen((m) {
       setState(() => _messages.add(m));
     });
@@ -45,6 +59,7 @@ class _ChataptorChatScreenState extends State<ChataptorChatScreen> {
   @override
   void dispose() {
     _messagesSub?.cancel();
+    _connectionStateSub?.cancel();
 
     // Mirror the `lazy` contract from spec §4 #12: the screen that opened
     // the socket is responsible for closing it. `foregroundActive` mode is
@@ -78,7 +93,11 @@ class _ChataptorChatScreenState extends State<ChataptorChatScreen> {
       body: Column(
         children: [
           Expanded(
-            child: ChataptorMessageList(messages: _messages, theme: theme),
+            child: ChataptorMessageList(
+              messages: _messages,
+              theme: theme,
+              isLoading: _isLoading,
+            ),
           ),
           ChataptorComposer(
             theme: theme,

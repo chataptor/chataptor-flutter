@@ -10,7 +10,12 @@ import 'package:flutter/material.dart';
 /// §7.10).
 class ChataptorMessageList extends StatelessWidget {
   /// Creates a [ChataptorMessageList].
-  const ChataptorMessageList({required this.messages, super.key, this.theme});
+  const ChataptorMessageList({
+    required this.messages,
+    super.key,
+    this.theme,
+    this.isLoading = false,
+  });
 
   /// Messages to render. Must be sorted oldest-first.
   final List<Message> messages;
@@ -18,12 +23,19 @@ class ChataptorMessageList extends StatelessWidget {
   /// Optional theme override.
   final ChataptorTheme? theme;
 
+  /// When `true` and [messages] is empty, shows a loading indicator instead of
+  /// the empty-state text. Has no effect when [messages] is non-empty.
+  final bool isLoading;
+
   @override
   Widget build(BuildContext context) {
     final effectiveTheme = theme ?? ChataptorTheme.matching(context);
     final loc = ChataptorLocalizations.of(context);
 
     if (messages.isEmpty) {
+      if (isLoading) {
+        return const Center(child: CircularProgressIndicator());
+      }
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
