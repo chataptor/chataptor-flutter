@@ -78,6 +78,40 @@ void main() {
     expect(find.textContaining('No messages'), findsOneWidget);
   });
 
+  testWidgets('shows "Powered by Chataptor" branding by default', (
+    tester,
+  ) async {
+    final transport = FakeChatTransport();
+    transport.inject.conversationCreated('site:abc', 'conv1');
+    await Chataptor.init(
+      siteId: 'abc',
+      widgetKey: 'pk_x',
+      apiUrl: Uri.parse('http://localhost:4000'),
+      transport: transport,
+    );
+    await tester.pumpWidget(const MaterialApp(home: ChataptorChatScreen()));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.textContaining('Powered by Chataptor'), findsOneWidget);
+  });
+
+  testWidgets('branding is hidden when showPoweredBy is false', (tester) async {
+    final transport = FakeChatTransport();
+    transport.inject.conversationCreated('site:abc', 'conv1');
+    await Chataptor.init(
+      siteId: 'abc',
+      widgetKey: 'pk_x',
+      apiUrl: Uri.parse('http://localhost:4000'),
+      transport: transport,
+    );
+    await tester.pumpWidget(
+      const MaterialApp(home: ChataptorChatScreen(showPoweredBy: false)),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.textContaining('Powered by Chataptor'), findsNothing);
+  });
+
   testWidgets('custom title appears in AppBar', (tester) async {
     final transport = FakeChatTransport();
     transport.inject.conversationCreated('site:abc', 'conv1');

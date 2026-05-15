@@ -14,13 +14,23 @@ import 'package:flutter/material.dart' hide ConnectionState;
 /// stateful connection to the [ChataptorClient] from [ChataptorScope.of].
 class ChataptorChatScreen extends StatefulWidget {
   /// Creates a [ChataptorChatScreen].
-  const ChataptorChatScreen({super.key, this.theme, this.title});
+  const ChataptorChatScreen({
+    super.key,
+    this.theme,
+    this.title,
+    this.showPoweredBy = true,
+  });
 
   /// Optional theme override.
   final ChataptorTheme? theme;
 
   /// Title displayed in the AppBar. Defaults to `'Support'` when omitted.
   final String? title;
+
+  /// Whether to show the "Powered by Chataptor" attribution strip between
+  /// the message list and the composer. Defaults to `true`. Set to `false`
+  /// to hide the attribution (white-label).
+  final bool showPoweredBy;
 
   @override
   State<ChataptorChatScreen> createState() => _ChataptorChatScreenState();
@@ -107,6 +117,7 @@ class _ChataptorChatScreenState extends State<ChataptorChatScreen> {
               isLoading: _isLoading,
             ),
           ),
+          if (widget.showPoweredBy) const _PoweredByBanner(),
           ChataptorComposer(
             theme: theme,
             enabled: _canSendMessage,
@@ -133,6 +144,28 @@ class _ChataptorChatScreenState extends State<ChataptorChatScreen> {
             },
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PoweredByBanner extends StatelessWidget {
+  const _PoweredByBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Center(
+        child: Text(
+          'Powered by Chataptor',
+          style: TextStyle(
+            fontSize: 11,
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.35),
+          ),
+        ),
       ),
     );
   }
