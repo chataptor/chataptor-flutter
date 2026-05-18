@@ -32,6 +32,14 @@ migrate_working_dir/
 .pub/
 build/
 
+# Android local SDK paths (machine-specific, never commit)
+**/android/local.properties
+**/android/.gradle/
+**/android/captures/
+**/android/key.properties
+**/*.jks
+**/*.keystore
+
 # Symbolication related
 app.*.symbols
 
@@ -76,6 +84,12 @@ run_local.bat
 
 # Git worktrees
 .worktrees/
+
+# Local sandbox app for integration testing (not published)
+examples/sandbox/
+
+# Local scratchpad for ad-hoc artifacts (screenshots, notes)
+.tmp/
 
 # Claude Code local settings (machine-specific permissions)
 .claude/settings.local.json
