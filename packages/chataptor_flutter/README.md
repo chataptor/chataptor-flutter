@@ -132,9 +132,26 @@ client.connectionState.listen((state) {
   if (state is Connected) _setReady();
 });
 
+// Per-language site config (welcome message, team name, offline mode)
+client.siteConfigStream.listen((config) {
+  setState(() => _teamName = config.activeHeaderTitle('pl'));
+});
+
+// Live roster of currently-online agents (id, name, avatar URL, initials)
+client.onlineAgentsStream.listen((agents) {
+  setState(() => _onlineAgents = agents);
+});
+
 // Send
 final result = await client.sendMessage('Hello!');
 ```
+
+The drop-in `ChataptorChatScreen` already consumes these streams to
+render `ChataptorChatHeader` (avatar stack of online agents, team name
+from `SiteConfig.activeHeaderTitle`, live Online/Offline indicator) —
+matching the production web widget on chataptor.com sites. Headless
+integrations get the same data so a custom header can show the same
+presence info.
 
 ## Testing
 
