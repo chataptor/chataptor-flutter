@@ -1,4 +1,5 @@
 import 'package:chataptor/chataptor.dart';
+import 'package:chataptor_flutter/src/l10n/chataptor_localizations.dart';
 import 'package:chataptor_flutter/src/theme/chataptor_theme.dart';
 import 'package:flutter/material.dart';
 
@@ -44,9 +45,10 @@ class ChataptorChatHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final resolvedTitle = title ?? 'Support';
+    final loc = ChataptorLocalizations.of(context);
+    final resolvedTitle = title ?? loc.headerDefaultTitle;
     final isOnline = onlineAgents.isNotEmpty;
-    final statusLabel = isOnline ? 'Online' : 'Offline';
+    final statusLabel = isOnline ? loc.headerOnline : loc.headerOffline;
     final statusColor = isOnline
         ? const Color(0xFF22C55E)
         : const Color(0xFF9CA3AF);
@@ -55,7 +57,7 @@ class ChataptorChatHeader extends StatelessWidget {
     final agentNoun = agentCount == 1 ? 'agent' : 'agents';
     final semanticsLabel = isOnline
         ? '$resolvedTitle. $agentCount $agentNoun online'
-        : '$resolvedTitle. Offline';
+        : '$resolvedTitle. ${loc.headerOffline}';
 
     return Semantics(
       label: semanticsLabel,

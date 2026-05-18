@@ -181,6 +181,7 @@ class _PoweredByBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = ChataptorLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Center(
@@ -192,9 +193,9 @@ class _PoweredByBanner extends StatelessWidget {
                 context,
               ).colorScheme.onSurface.withValues(alpha: 0.35),
             ),
-            children: const [
-              TextSpan(text: 'Powered by '),
-              TextSpan(
+            children: [
+              TextSpan(text: loc.poweredByPrefix),
+              const TextSpan(
                 text: 'chataptor.com',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),

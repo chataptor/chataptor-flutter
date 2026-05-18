@@ -92,7 +92,7 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: ChataptorChatScreen()));
     await tester.pump(const Duration(milliseconds: 100));
 
-    expect(find.textContaining('Powered by Chataptor'), findsOneWidget);
+    expect(find.textContaining('chataptor.com'), findsOneWidget);
   });
 
   testWidgets('branding is hidden when showPoweredBy is false', (tester) async {

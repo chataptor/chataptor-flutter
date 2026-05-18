@@ -23,6 +23,10 @@ class ChataptorLocalizations {
     required this.closeChat,
     required this.emptyState,
     required this.welcomeMessage,
+    required this.headerOnline,
+    required this.headerOffline,
+    required this.headerDefaultTitle,
+    required this.poweredByPrefix,
   });
 
   /// English strings.
@@ -42,6 +46,10 @@ class ChataptorLocalizations {
     closeChat: 'Close chat',
     emptyState: 'No messages yet',
     welcomeMessage: 'Hi! How can we help?',
+    headerOnline: 'Online',
+    headerOffline: 'Offline',
+    headerDefaultTitle: 'Support',
+    poweredByPrefix: 'Powered by ',
   );
 
   /// Polish strings.
@@ -61,6 +69,10 @@ class ChataptorLocalizations {
     closeChat: 'Zamknij czat',
     emptyState: 'Brak wiadomości',
     welcomeMessage: 'Cześć! Jak możemy pomóc?',
+    headerOnline: 'Online',
+    headerOffline: 'Offline',
+    headerDefaultTitle: 'Wsparcie',
+    poweredByPrefix: 'Wspierane przez ',
   );
 
   /// Locales supported out of the box in v0.1.0.
@@ -111,6 +123,21 @@ class ChataptorLocalizations {
   /// Greeting shown in the empty state before any messages arrive.
   final String welcomeMessage;
 
+  /// Header status label when at least one agent is online.
+  final String headerOnline;
+
+  /// Header status label when no agents are online.
+  final String headerOffline;
+
+  /// Header title fallback when neither widget.title nor SiteConfig
+  /// supplies one (e.g. `'Support'` / `'Wsparcie'`).
+  final String headerDefaultTitle;
+
+  /// Prefix before the bolded brand domain in the attribution strip
+  /// (`'Powered by '` / `'Wspierane przez '`). The domain itself is not
+  /// localized.
+  final String poweredByPrefix;
+
   /// Returns the nearest [ChataptorLocalizations] from the widget tree, or
   /// [ChataptorLocalizations.en] if none was provided.
   static ChataptorLocalizations of(BuildContext context) {
@@ -143,6 +170,10 @@ class ChataptorLocalizations {
     String? closeChat,
     String? emptyState,
     String? welcomeMessage,
+    String? headerOnline,
+    String? headerOffline,
+    String? headerDefaultTitle,
+    String? poweredByPrefix,
   }) {
     return ChataptorLocalizations(
       typeMessage: typeMessage ?? this.typeMessage,
@@ -160,6 +191,10 @@ class ChataptorLocalizations {
       closeChat: closeChat ?? this.closeChat,
       emptyState: emptyState ?? this.emptyState,
       welcomeMessage: welcomeMessage ?? this.welcomeMessage,
+      headerOnline: headerOnline ?? this.headerOnline,
+      headerOffline: headerOffline ?? this.headerOffline,
+      headerDefaultTitle: headerDefaultTitle ?? this.headerDefaultTitle,
+      poweredByPrefix: poweredByPrefix ?? this.poweredByPrefix,
     );
   }
 }
