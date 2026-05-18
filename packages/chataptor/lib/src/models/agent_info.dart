@@ -22,8 +22,9 @@ class AgentInitials {
   int get hashCode => Object.hash(letters, color);
 }
 
-/// Public information about the support agent currently assigned to the
-/// conversation.
+/// Public information about a support agent — either the one assigned to
+/// the active conversation, or a member of the currently-online agent
+/// pool surfaced via `ChataptorClient.currentOnlineAgents`.
 @immutable
 class AgentInfo {
   /// Creates an [AgentInfo].
@@ -33,6 +34,47 @@ class AgentInfo {
     this.avatarUrl,
     this.initials,
   });
+
+  /// Parses a single agent entry as serialized by the backend's
+  /// `agent:available` Phoenix event (also used in the assigned-agent
+  /// payload on the conversation channel). Tolerates both `int` and
+  /// `String` IDs.
+  factory AgentInfo.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
+    final id = rawId is int
+        ? rawId
+        : (rawId is String ? int.tryParse(rawId) ?? 0 : 0);
+    final initialsRaw = json['initials'];
+    AgentInitials? initials;
+    if (initialsRaw is Map) {
+      final initialsMap = Map<String, dynamic>.from(initialsRaw);
+      initials = AgentInitials(
+        letters: (initialsMap['letters'] as String?) ?? '',
+        color: (initialsMap['color'] as String?) ?? '',
+      );
+    }
+    return AgentInfo(
+      id: id,
+      name: (json['name'] as String?) ?? '',
+      avatarUrl: json['avatar_url'] as String?,
+      initials: initials,
+    );
+  }
+
+  /// Parses the `agents:` list from an `agent:available` event payload
+  /// into a typed list of [AgentInfo]. Skips entries that are not maps so
+  /// the caller does not need to defensively unwrap the broadcast payload.
+  static List<AgentInfo> listFromPresencePayload(Map<String, dynamic> json) {
+    final raw = json['agents'];
+    if (raw is! List) return const [];
+    final out = <AgentInfo>[];
+    for (final entry in raw) {
+      if (entry is Map) {
+        out.add(AgentInfo.fromJson(Map<String, dynamic>.from(entry)));
+      }
+    }
+    return out;
+  }
 
   /// Server-assigned agent ID.
   final int id;

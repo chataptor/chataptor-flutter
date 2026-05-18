@@ -5,9 +5,11 @@ import 'package:chataptor/src/client/connection_state.dart';
 import 'package:chataptor/src/client/message_parser.dart';
 import 'package:chataptor/src/client/send_result.dart';
 import 'package:chataptor/src/config/chataptor_config.dart';
+import 'package:chataptor/src/config/site_config.dart';
 import 'package:chataptor/src/errors/chataptor_error.dart';
 import 'package:chataptor/src/logger/chataptor_logger.dart';
 import 'package:chataptor/src/models/agent_info.dart';
+import 'package:chataptor/src/models/enums.dart';
 import 'package:chataptor/src/models/message.dart';
 import 'package:chataptor/src/models/message_draft.dart';
 import 'package:chataptor/src/storage/chataptor_storage.dart';
@@ -59,6 +61,9 @@ class ChataptorClient {
       StreamController<Message>.broadcast();
   final StreamController<ChataptorError> _errors =
       StreamController<ChataptorError>.broadcast();
+  final ValueStream<SiteConfig> _siteConfigStream = ValueStream<SiteConfig>();
+  final ValueStream<List<AgentInfo>> _onlineAgentsStream =
+      ValueStream<List<AgentInfo>>();
 
   bool _disposed = false;
 
@@ -110,6 +115,35 @@ class ChataptorClient {
   /// Stream of non-fatal errors emitted by the client.
   Stream<ChataptorError> get errors => _errors.stream;
 
+  /// Last [SiteConfig] received from the backend on `site:X` channel join.
+  ///
+  /// Available after a successful [connect] when the server returned a
+  /// `site_config` block in its join response. `null` before the first
+  /// successful connect and after [clearSession]. Survives [disconnect] so
+  /// that header chrome (team name, online indicator) does not flash to
+  /// a blank state during a reconnect cycle — matches the
+  /// [currentMessages] policy.
+  SiteConfig? get currentSiteConfig => _siteConfigStream.value;
+
+  /// Stream of [SiteConfig] updates. Emits once per successful
+  /// `site:X` join. Replays the current value to new listeners.
+  Stream<SiteConfig> get siteConfigStream => _siteConfigStream.stream;
+
+  /// Snapshot of agents the backend reports as currently online for this
+  /// site, in arrival order (backend caps the list at 5).
+  ///
+  /// Empty when no `agent:available` event has arrived yet, or after the
+  /// most recent `agents:offline` push. Survives [disconnect] so the
+  /// header avatar stack does not flash to empty during a reconnect cycle.
+  /// Cleared by [clearSession].
+  List<AgentInfo> get currentOnlineAgents =>
+      _onlineAgentsStream.value ?? const [];
+
+  /// Stream of online-agent snapshots. Emits a fresh list each time the
+  /// backend pushes `agent:available` or `agents:offline`. Replays the
+  /// current snapshot to new listeners.
+  Stream<List<AgentInfo>> get onlineAgentsStream => _onlineAgentsStream.stream;
+
   /// Opens the WebSocket, joins the site channel, creates a conversation, and
   /// joins the conversation channel. [Connected] is emitted only after the
   /// full handshake completes. Idempotent.
@@ -127,7 +161,11 @@ class ChataptorClient {
 
     try {
       await _transport.connect(transportConfig);
-      await _transport.joinChannel(_siteTopic(), _buildSiteJoinParams());
+      final siteJoinPayload = await _transport.joinChannel(
+        _siteTopic(),
+        _buildSiteJoinParams(),
+      );
+      _ingestSiteJoinPayload(siteJoinPayload);
     } on Object catch (err, st) {
       config.logger.log(
         ChataptorLogLevel.error,
@@ -190,6 +228,7 @@ class ChataptorClient {
         _connectionState.add(const Connected());
         config.hooks.onConnectionStateChanged?.call(const Connected());
         _loadHistory(joinPayload);
+        _injectWelcomeIfApplicable();
 
       case PushServerError(:final reason):
         _emitConnectError('conversation:create rejected by server: $reason');
@@ -287,6 +326,8 @@ class ChataptorClient {
     await _guestIdStore.clear();
     _seenMessageIds.clear();
     _messageHistory.clear();
+    _siteConfigStream.clear();
+    _onlineAgentsStream.add(const []);
   }
 
   /// Releases every resource. After [dispose] the client is unusable.
@@ -297,6 +338,61 @@ class ChataptorClient {
     await _connectionState.close();
     await _messages.close();
     await _errors.close();
+    await _siteConfigStream.close();
+    await _onlineAgentsStream.close();
+  }
+
+  void _ingestSiteJoinPayload(Map<String, dynamic> payload) {
+    final raw = payload['site_config'];
+    if (raw is! Map) return;
+    final parsed = SiteConfig.fromJson(Map<String, dynamic>.from(raw));
+    _siteConfigStream.add(parsed);
+  }
+
+  /// Renders the merchant-configured welcome message as the first agent
+  /// bubble on a freshly-opened conversation.
+  ///
+  /// Skipped when:
+  /// - no conversation is active (defensive — should never happen),
+  /// - the local message buffer already contains messages (reconnect on
+  ///   an existing thread — the customer has seen the welcome already),
+  /// - no site_config arrived or the active language variant resolves to
+  ///   `null`,
+  /// - a message with the same deterministic id is already in
+  ///   `_seenMessageIds` (defends against duplicate injection across
+  ///   reconnect cycles where the buffer was cleared but the id cache
+  ///   survived).
+  ///
+  /// The id is deterministic per conversation (`welcome-<convId>`) and
+  /// gets added to `_seenMessageIds`, so even pathological repeats are
+  /// idempotent.
+  void _injectWelcomeIfApplicable() {
+    final convId = _conversationId;
+    if (convId == null) return;
+    if (_messageHistory.isNotEmpty) return;
+    final siteConfig = _siteConfigStream.value;
+    if (siteConfig == null) return;
+    final welcomeBody = siteConfig.activeWelcomeMessage(
+      config.translation.customerLanguage,
+    );
+    if (welcomeBody == null || welcomeBody.isEmpty) return;
+
+    final welcomeId = 'welcome-$convId';
+    if (_seenMessageIds.contains(welcomeId)) return;
+    _seenMessageIds.add(welcomeId);
+
+    final welcome = Message(
+      id: welcomeId,
+      conversationId: convId,
+      body: welcomeBody,
+      author: MessageAuthor.agent,
+      timestamp: DateTime.now().toUtc(),
+      type: MessageType.text,
+      deliveryChannel: DeliveryChannel.websocket,
+      status: MessageStatus.sent,
+    );
+    _messageHistory.add(welcome);
+    _messages.add(welcome);
   }
 
   Uri _socketUrl() {
@@ -359,14 +455,30 @@ class ChataptorClient {
 
   void _handleTransportEvent(TransportEvent event) {
     switch (event) {
-      case MessageReceived():
-        unawaited(_handleMessageReceived(event));
+      case MessageReceived(:final event, :final payload):
+        switch (event) {
+          case 'message:received':
+            unawaited(_handleMessageReceived(payload));
+          case 'agent:available':
+            _handleAgentAvailable(payload);
+          case 'agents:offline':
+            _handleAgentsOffline();
+        }
       case ChannelClosed():
         // Propagate as reconnecting — transport will also emit state.
         break;
       case ChannelError(:final message):
         _errors.add(NetworkError(message));
     }
+  }
+
+  void _handleAgentAvailable(Map<String, dynamic> payload) {
+    final agents = AgentInfo.listFromPresencePayload(payload);
+    _onlineAgentsStream.add(List<AgentInfo>.unmodifiable(agents));
+  }
+
+  void _handleAgentsOffline() {
+    _onlineAgentsStream.add(const []);
   }
 
   SendResult _handleSendOk(Map<String, dynamic> response, MessageDraft draft) {
@@ -382,9 +494,8 @@ class ChataptorClient {
     return (id != null && id.isNotEmpty) ? id : null;
   }
 
-  Future<void> _handleMessageReceived(MessageReceived event) async {
-    if (event.event != 'message:received') return;
-    var message = parseIncomingMessage(event.payload);
+  Future<void> _handleMessageReceived(Map<String, dynamic> payload) async {
+    var message = parseIncomingMessage(payload);
 
     if (message.id.isNotEmpty) {
       if (_seenMessageIds.contains(message.id)) return;

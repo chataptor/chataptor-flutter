@@ -64,4 +64,15 @@ class ValueStream<T> {
     _closed = true;
     await _controller.close();
   }
+
+  /// Drops the stored value so [value] returns `null` and [hasValue] flips
+  /// back to `false`. New subscribers after a [clear] will not receive an
+  /// initial replay until [add] is called again.
+  ///
+  /// Use this when an external "reset" event invalidates the cached value
+  /// (e.g. `ChataptorClient.clearSession` discards site config).
+  void clear() {
+    _value = null;
+    _hasValue = false;
+  }
 }

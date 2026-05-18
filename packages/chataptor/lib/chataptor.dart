@@ -17,6 +17,7 @@ export 'src/client/send_result.dart';
 export 'src/config/chataptor_config.dart';
 export 'src/config/feature_toggles.dart';
 export 'src/config/push_config.dart';
+export 'src/config/site_config.dart';
 export 'src/config/translation_config.dart';
 export 'src/config/transport_config.dart';
 
