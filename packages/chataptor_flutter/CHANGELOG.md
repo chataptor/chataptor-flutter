@@ -15,5 +15,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ValueListenableStream` adapter.
 - `ChataptorTheme` with `light()` and `matching(context)` factories.
 - `ChataptorLocalizations` with English and Polish.
-- Widgets: `ChataptorMessageBubble`, `ChataptorMessageList`, `ChataptorComposer`, `ChataptorChatScreen`.
+- Widgets: `ChataptorMessageBubble`, `ChataptorMessageList`, `ChataptorComposer`, `ChataptorChatScreen`, `ChataptorChatHeader`.
+- `ChataptorChatHeader` shows an avatar stack of currently online agents (up to 3 visible + overflow badge), the configured team name (e.g. "Customer Support") from `SiteConfig.headerTitle`, and a live Online/Offline status indicator driven by `onlineAgentsStream`. Replaces the previous hardcoded `'Support'` AppBar title in `ChataptorChatScreen`.
 - Transitively exports the `chataptor` core package.
