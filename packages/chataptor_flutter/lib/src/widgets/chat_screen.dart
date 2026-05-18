@@ -184,13 +184,21 @@ class _PoweredByBanner extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Center(
-        child: Text(
-          'Powered by Chataptor',
-          style: TextStyle(
-            fontSize: 11,
-            color: Theme.of(
-              context,
-            ).colorScheme.onSurface.withValues(alpha: 0.35),
+        child: Text.rich(
+          TextSpan(
+            style: TextStyle(
+              fontSize: 11,
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.35),
+            ),
+            children: const [
+              TextSpan(text: 'Powered by '),
+              TextSpan(
+                text: 'chataptor.com',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
           ),
         ),
       ),
