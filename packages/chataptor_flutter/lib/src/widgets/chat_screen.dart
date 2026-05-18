@@ -4,6 +4,7 @@ import 'package:chataptor/chataptor.dart';
 import 'package:chataptor_flutter/src/l10n/chataptor_localizations.dart';
 import 'package:chataptor_flutter/src/scope.dart';
 import 'package:chataptor_flutter/src/theme/chataptor_theme.dart';
+import 'package:chataptor_flutter/src/widgets/chat_header.dart';
 import 'package:chataptor_flutter/src/widgets/composer.dart';
 import 'package:chataptor_flutter/src/widgets/message_list.dart';
 import 'package:flutter/material.dart' hide ConnectionState;
@@ -40,10 +41,14 @@ class _ChataptorChatScreenState extends State<ChataptorChatScreen> {
   final List<Message> _messages = [];
   StreamSubscription<Message>? _messagesSub;
   StreamSubscription<ConnectionState>? _connectionStateSub;
+  StreamSubscription<SiteConfig>? _siteConfigSub;
+  StreamSubscription<List<AgentInfo>>? _onlineAgentsSub;
   bool _connectStarted = false;
   bool _isLoading = true;
   bool _canSendMessage = false;
   ChataptorClient? _ownedClient;
+  SiteConfig? _siteConfig;
+  List<AgentInfo> _onlineAgents = const [];
 
   @override
   void didChangeDependencies() {
@@ -57,6 +62,15 @@ class _ChataptorChatScreenState extends State<ChataptorChatScreen> {
     // re-entry. The stream subscription below only delivers truly new messages
     // (history dedup happens at the client level via _seenMessageIds).
     _messages.addAll(client.currentMessages);
+    _siteConfig = client.currentSiteConfig;
+    _onlineAgents = client.currentOnlineAgents;
+
+    _siteConfigSub = client.siteConfigStream.listen((cfg) {
+      if (mounted) setState(() => _siteConfig = cfg);
+    });
+    _onlineAgentsSub = client.onlineAgentsStream.listen((agents) {
+      if (mounted) setState(() => _onlineAgents = agents);
+    });
 
     _connectionStateSub = client.connectionState.listen((state) {
       final loading = state is Connecting || state is Reconnecting;
@@ -78,6 +92,8 @@ class _ChataptorChatScreenState extends State<ChataptorChatScreen> {
   void dispose() {
     _messagesSub?.cancel();
     _connectionStateSub?.cancel();
+    _siteConfigSub?.cancel();
+    _onlineAgentsSub?.cancel();
 
     // Mirror the `lazy` contract from spec §4 #12: the screen that opened
     // the socket is responsible for closing it. `foregroundActive` mode is
@@ -97,11 +113,22 @@ class _ChataptorChatScreenState extends State<ChataptorChatScreen> {
     final loc = ChataptorLocalizations.of(context);
     final client = ChataptorScope.of(context).client;
 
+    final resolvedTitle =
+        widget.title ??
+        _siteConfig?.activeHeaderTitle(
+          client.config.translation.customerLanguage,
+        );
+
     return Scaffold(
       backgroundColor: theme.backgroundColor,
       appBar: AppBar(
         backgroundColor: theme.surfaceColor,
-        title: Text(widget.title ?? 'Support', style: theme.headerTextStyle),
+        titleSpacing: 0,
+        title: ChataptorChatHeader(
+          title: resolvedTitle,
+          onlineAgents: _onlineAgents,
+          theme: theme,
+        ),
         leading: IconButton(
           icon: const Icon(Icons.close),
           tooltip: loc.closeChat,

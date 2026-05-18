@@ -11,6 +11,7 @@ export 'src/l10n/chataptor_localizations.dart';
 export 'src/lifecycle.dart';
 export 'src/scope.dart';
 export 'src/theme/chataptor_theme.dart';
+export 'src/widgets/chat_header.dart';
 export 'src/widgets/chat_screen.dart';
 export 'src/widgets/composer.dart';
 export 'src/widgets/message_bubble.dart';
