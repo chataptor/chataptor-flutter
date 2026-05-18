@@ -27,8 +27,12 @@ class _HeadlessChatScreenState extends State<HeadlessChatScreen> {
   ConnectionState _connection = const Disconnected(
     DisconnectReason.userRequested,
   );
+  SiteConfig? _siteConfig;
+  List<AgentInfo> _onlineAgents = const [];
   StreamSubscription<Message>? _messagesSub;
   StreamSubscription<ConnectionState>? _connectionSub;
+  StreamSubscription<SiteConfig>? _siteConfigSub;
+  StreamSubscription<List<AgentInfo>>? _onlineAgentsSub;
   bool _sending = false;
 
   @override
@@ -36,6 +40,8 @@ class _HeadlessChatScreenState extends State<HeadlessChatScreen> {
     super.initState();
 
     _messages.addAll(_client.currentMessages);
+    _siteConfig = _client.currentSiteConfig;
+    _onlineAgents = _client.currentOnlineAgents;
     final current = _client.currentConnectionState;
     if (current != null) _connection = current;
 
@@ -48,6 +54,14 @@ class _HeadlessChatScreenState extends State<HeadlessChatScreen> {
       setState(() => _messages.add(m));
       _scrollToBottom();
     });
+    _siteConfigSub = _client.siteConfigStream.listen((cfg) {
+      if (!mounted) return;
+      setState(() => _siteConfig = cfg);
+    });
+    _onlineAgentsSub = _client.onlineAgentsStream.listen((agents) {
+      if (!mounted) return;
+      setState(() => _onlineAgents = agents);
+    });
 
     unawaited(_client.connect());
   }
@@ -56,6 +70,8 @@ class _HeadlessChatScreenState extends State<HeadlessChatScreen> {
   void dispose() {
     _messagesSub?.cancel();
     _connectionSub?.cancel();
+    _siteConfigSub?.cancel();
+    _onlineAgentsSub?.cancel();
     if (_client.config.transport.connectionMode == ConnectionMode.lazy) {
       unawaited(_client.disconnect());
     }
@@ -109,12 +125,21 @@ class _HeadlessChatScreenState extends State<HeadlessChatScreen> {
   @override
   Widget build(BuildContext context) {
     final canSend = _connection is Connected && !_sending;
+    final lang = _client.config.translation.customerLanguage;
+    final resolvedTitle =
+        _siteConfig?.activeHeaderTitle(lang) ?? 'Headless (custom UI)';
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Headless (custom UI)'),
+        title: Text(resolvedTitle),
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(28),
-          child: _ConnectionBadge(state: _connection),
+          preferredSize: const Size.fromHeight(60),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _PresenceStrip(agents: _onlineAgents),
+              _ConnectionBadge(state: _connection),
+            ],
+          ),
         ),
       ),
       body: Column(
@@ -267,5 +292,68 @@ class _Bubble extends StatelessWidget {
     final hh = local.hour.toString().padLeft(2, '0');
     final mm = local.minute.toString().padLeft(2, '0');
     return '$hh:$mm';
+  }
+}
+
+class _PresenceStrip extends StatelessWidget {
+  const _PresenceStrip({required this.agents});
+
+  final List<AgentInfo> agents;
+
+  @override
+  Widget build(BuildContext context) {
+    if (agents.isEmpty) {
+      return Container(
+        width: double.infinity,
+        color: const Color(0xFFFEF2F2),
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+        child: const Text(
+          'Currently offline — leave a message and we’ll respond',
+          style: TextStyle(fontSize: 12, color: Color(0xFF991B1B)),
+        ),
+      );
+    }
+    return Container(
+      width: double.infinity,
+      color: const Color(0xFFECFDF5),
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+      child: Row(
+        children: [
+          const Icon(Icons.circle, color: Color(0xFF16A34A), size: 8),
+          const SizedBox(width: 6),
+          Text(
+            '${agents.length} ${agents.length == 1 ? "agent" : "agents"} '
+            'online:',
+            style: const TextStyle(fontSize: 12, color: Color(0xFF166534)),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Wrap(
+              spacing: 6,
+              children: [
+                for (final a in agents.take(5))
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 1,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD1FAE5),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      a.name,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF166534),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
