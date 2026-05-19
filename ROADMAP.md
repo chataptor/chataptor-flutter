@@ -14,46 +14,50 @@ For locked architectural decisions (transport choice, license, dependency
 budget, …) see [`ARCHITECTURE.md`](./ARCHITECTURE.md). This file is about
 **product feature evolution**, not architecture.
 
-## Feature parity with the web widget
+## Feature parity with the production web widget
 
-The web widget (`web-widget.umd.js`, embedded on chataptor.com
-customer sites such as example.com) currently consumes more backend signals
-than the Flutter SDK does. Items below close that gap.
+The production Chataptor web widget (embedded on chataptor.com customer
+sites today) currently consumes more backend signals than the Flutter
+SDK does. Items below close that gap. Each row reflects what the
+Chataptor backend already serializes on the `site:X` channel join or
+broadcasts thereafter.
 
-Backend signals already serialized — confirmed in `internal-backend`:
-
-| Signal | Source | Web widget | Flutter SDK (today) | Target |
-|---|---|---|---|---|
-| `welcome_message` (per-language) | `site:X` join payload | ✅ first agent bubble | ⬜ ignored | 🟡 v0.1.0 |
-| `header_title` (per-language, e.g. "Customer Support") | `language_variants[n]` in site join | ✅ header label | ⬜ ignored (hardcoded `Support`) | 🟡 v0.1.0 |
-| `agent:available` event (id, name, avatar_url, initials, color; up to 5) | broadcast after site join | ✅ avatar stack in header | ⬜ never subscribed | 🟡 v0.1.0 |
-| `agents:offline` event | broadcast | ✅ offline state in header | ⬜ never subscribed | 🟡 v0.1.0 |
-| `offline_mode` (`auto`/`manual_offline`/`manual_online`) + `offline_message` | site_config | ✅ "We're closed" UX | ⬜ ignored | ⬜ **v0.2.0** |
-| `working_hours_enabled` + `next_available` timestamp | derived | ✅ "Back Monday 09:00" | ⬜ ignored | ⬜ **v0.2.0** |
-| `typing_preview_enabled` | site_config | likely ✅ | ⬜ ignored | ⬜ **v0.3.0** |
-| Attachments (file upload, image preview) | `message:send` payload | ✅ paperclip button | ⬜ models exist (`Attachment`), no UI | ⬜ **v0.4.0** |
-| Emoji picker | composer | ✅ | ⬜ | ⬜ **v0.4.0** |
-| `widget_open_on` (`hover`/`click`) | site_config | ✅ launcher behavior | n/a (mobile uses navigation) | n/a |
+| Signal | Web widget | Flutter SDK (today) | Target |
+|---|---|---|---|
+| `welcome_message` (per-language) | ✅ first agent bubble | ⬜ ignored | 🟡 v0.1.0 |
+| `header_title` (per-language, e.g. "Customer Support") | ✅ header label | ⬜ ignored (hardcoded `Support`) | 🟡 v0.1.0 |
+| `agent:available` event (id, name, avatar_url, initials, color; up to 5) | ✅ avatar stack in header | ⬜ never subscribed | 🟡 v0.1.0 |
+| `agents:offline` event | ✅ offline state in header | ⬜ never subscribed | 🟡 v0.1.0 |
+| `offline_mode` (`auto`/`manual_offline`/`manual_online`) + `offline_message` | ✅ "We're closed" UX | ⬜ ignored | ⬜ **v0.2.0** |
+| `working_hours_enabled` + `next_available` timestamp | ✅ "Back Monday 09:00" | ⬜ ignored | ⬜ **v0.2.0** |
+| `typing_preview_enabled` | likely ✅ | ⬜ ignored | ⬜ **v0.3.0** |
+| Attachments (file upload, image preview) | ✅ paperclip button | ⬜ models exist (`Attachment`), no UI | ⬜ **v0.4.0** |
+| Emoji picker | ✅ | ⬜ | ⬜ **v0.4.0** |
+| `widget_open_on` (`hover`/`click`) | ✅ launcher behavior | n/a (mobile uses navigation) | n/a |
 
 ## v0.1.0 — Initial public release
 
-Goal: first pub.dev release. Anonymous customer chat, drop-in widget, real-time multilingual support.
+First pub.dev release. Anonymous customer chat, drop-in widget,
+real-time multilingual support.
 
-🟡 **In flight (this milestone, before tag):**
-- Header parity with web widget — `ChataptorChatHeader` with online-agent avatar stack + team name + Online/Offline status
-- `welcome_message` rendered as the first agent bubble (client-side injection when history empty)
-- Subscription to `agent:available` / `agents:offline` events; expose `onlineAgentsStream` + `currentOnlineAgents` on client
-- `SiteConfig` model parsed from site channel join payload; expose `currentSiteConfig` on client
-- Headless demo updated to consume these signals (proves merchants with custom UI can also render presence)
-
-✅ Already shipped (working today):
+✅ Shipped:
 - `ChataptorClient` with anonymous identity, Phoenix Channels transport
-- `ChataptorChatScreen` drop-in widget (title, theme, showPoweredBy)
+- `ChataptorChatScreen` drop-in widget (title, theme, `showPoweredBy`)
+- `ChataptorChatHeader` — avatar stack of online agents, team name from
+  `SiteConfig.activeHeaderTitle`, live Online/Offline status indicator
+- `welcome_message` rendered as the first agent bubble (client-side
+  injection when conversation history is empty)
+- Subscription to `agent:available` / `agents:offline` events;
+  `onlineAgentsStream` + `currentOnlineAgents` exposed on the client
+- `SiteConfig` model parsed from the site channel join payload;
+  `siteConfigStream` + `currentSiteConfig` exposed on the client
+- Headless demo in `examples/quickstart` consuming `siteConfigStream`
+  and `onlineAgentsStream` for fully custom UIs
 - `ChataptorTheme.light()` and `.matching(context)`
 - EN + PL localizations
 - Translation config (auto, per-customer language)
 - Send guard, skeleton loader, anti-flash empty state
-- Sandbox + quickstart example apps (default / matched / branded / headless)
+- Quickstart example app (default / matched / branded / headless demos)
 
 ## v0.2.0 — Identified customers + offline awareness
 
@@ -107,9 +111,7 @@ Listed so they don't keep resurfacing:
 
 ## Sources
 
-Decisions above are grounded in:
-
-- `internal-backend/apps/internal_backend/lib/internal_backend_web/channels/chat_channel.ex` — site/conversation channel handlers
-- `internal-backend/apps/internal_core/lib/internal_core/schema/site.ex` + `site_language_variant.ex` + `agent.ex` + `business_hours.ex`
-- `internal-backend/apps/internal_core/lib/internal_core/agent_availability.ex`
-- Live observation of the web widget on a production deployment
+Roadmap items above are grounded in observed behaviour of the production
+Chataptor web widget and the backend signals it consumes. The backend
+itself is closed-source; this SDK targets the same wire protocol so
+mobile experience parity tracks the web one.
