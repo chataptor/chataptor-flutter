@@ -1,8 +1,8 @@
 name: chataptor_flutter
-description: Official Flutter widgets and singleton for Chataptor — real-time multilingual customer support chat. Drop-in UI on top of the chataptor core.
+description: Drop-in Flutter widgets for real-time, auto-translated customer support chat. Official Chataptor SDK with built-in theming, localization, and lifecycle.
 version: 0.1.0
 repository: https://github.com/chataptor/chataptor-flutter
-homepage: https://chataptor.com
+homepage: https://chataptor.com?utm_source=pub.dev&utm_medium=referral&utm_campaign=chataptor_flutter&utm_content=pubspec_homepage
 issue_tracker: https://github.com/chataptor/chataptor-flutter/issues
 topics:
   - chat

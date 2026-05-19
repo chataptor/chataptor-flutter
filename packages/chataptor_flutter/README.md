@@ -2,11 +2,11 @@
 
 [![pub.dev](https://img.shields.io/pub/v/chataptor_flutter.svg)](https://pub.dev/packages/chataptor_flutter)
 [![CI](https://github.com/chataptor/chataptor-flutter/actions/workflows/ci.yml/badge.svg)](https://github.com/chataptor/chataptor-flutter/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](../../LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/chataptor/chataptor-flutter/blob/main/LICENSE)
 
-Official Flutter widgets for [Chataptor](https://chataptor.com) — real-time multilingual customer support chat with built-in auto-translation.
+Official Flutter widgets for [Chataptor](https://chataptor.com?utm_source=pub.dev&utm_medium=referral&utm_campaign=chataptor_flutter&utm_content=readme_hero) — real-time multilingual customer support chat with built-in auto-translation.
 
-This package provides the `Chataptor` singleton, ready-to-use chat widgets, theming, and localization. It re-exports the full [`chataptor`](../chataptor/) core, so you only need this one dependency.
+This package provides the `Chataptor` singleton, ready-to-use chat widgets, theming, and localization. It re-exports the full [`chataptor`](https://pub.dev/packages/chataptor) core, so you only need this one dependency.
 
 ## Install
 
@@ -203,4 +203,4 @@ Use `fake.inject` to drive the client into any state, and `fake.recorded` to ass
 
 ## License
 
-[MIT](../../LICENSE) © 2026 Chataptor
+[MIT](https://github.com/chataptor/chataptor-flutter/blob/main/LICENSE) © 2026 Chataptor

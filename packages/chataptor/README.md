@@ -2,11 +2,11 @@
 
 [![pub.dev](https://img.shields.io/pub/v/chataptor.svg)](https://pub.dev/packages/chataptor)
 [![CI](https://github.com/chataptor/chataptor-flutter/actions/workflows/ci.yml/badge.svg)](https://github.com/chataptor/chataptor-flutter/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](../../LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/chataptor/chataptor-flutter/blob/main/LICENSE)
 
-Pure-Dart headless core client for [Chataptor](https://chataptor.com) — real-time multilingual customer support chat.
+Pure-Dart headless core client for [Chataptor](https://chataptor.com?utm_source=pub.dev&utm_medium=referral&utm_campaign=chataptor&utm_content=readme_hero) — real-time multilingual customer support chat.
 
-**This package has no Flutter dependency.** Use it when you need a custom UI or when you are integrating Chataptor into a pure-Dart server or CLI context. For drop-in Flutter widgets, use [`chataptor_flutter`](../chataptor_flutter/) instead — it re-exports everything in this package.
+**This package has no Flutter dependency.** Use it when you need a custom UI or when you are integrating Chataptor into a pure-Dart server or CLI context. For drop-in Flutter widgets, use [`chataptor_flutter`](https://pub.dev/packages/chataptor_flutter) instead — it re-exports everything in this package.
 
 ## Install
 
@@ -219,4 +219,4 @@ For testing the SDK transport layer itself, use `FakeChatTransport`.
 
 ## License
 
-[MIT](../../LICENSE) © 2026 Chataptor
+[MIT](https://github.com/chataptor/chataptor-flutter/blob/main/LICENSE) © 2026 Chataptor
