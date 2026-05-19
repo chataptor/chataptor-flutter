@@ -81,7 +81,44 @@ client.connectionState.listen((state) {
 final current = client.currentConnectionState;
 ```
 
-### 5. Disconnect and dispose
+### 5. Read site config and online-agent presence
+
+The backend pushes site configuration (welcome message, header title per
+language, offline mode) on the site channel join, and broadcasts agent
+availability events thereafter. Both signals are exposed as streams with
+a synchronous current-value accessor for one-shot reads:
+
+```dart
+// Per-language site config (welcomeMessage, headerTitle, offline mode).
+final config = client.currentSiteConfig;
+print(config?.activeHeaderTitle('pl'));
+
+client.siteConfigStream.listen((cfg) {
+  // re-render header / offline UX
+});
+
+// Live roster of currently-online agents (id, name, avatar URL, initials).
+for (final agent in client.currentOnlineAgents) {
+  print('${agent.name} (${agent.initials.short})');
+}
+
+client.onlineAgentsStream.listen((agents) {
+  // re-render avatar stack / Online-Offline status
+});
+```
+
+### 6. Clear the session
+
+`clearSession()` drops the persisted guest identity and resets the
+in-memory conversation. The next `connect()` registers as a fresh
+customer with a new conversation thread. Useful for "log out" buttons
+in customer apps and for local development.
+
+```dart
+await client.clearSession();
+```
+
+### 7. Disconnect and dispose
 
 ```dart
 await client.disconnect();

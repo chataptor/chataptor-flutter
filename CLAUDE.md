@@ -190,4 +190,4 @@ Code, identifiers, commit messages, dartdoc, pub.dev descriptions, READMEs, guid
 
 ## Last updated
 
-2026-05-07 — repo cleanup: removed AI planning artifacts, extracted architecture decisions to `ARCHITECTURE.md`.
+2026-05-19 — v0.1.0 release prep: shipped web parity (`ChataptorChatHeader` + `SiteConfig` + welcome injection + online-agent presence streams), bumped packages to `0.1.0`, scrubbed git history of internal backend references prior to opening the repo publicly.

@@ -5,7 +5,9 @@
 
 > Real-time multilingual customer support chat for Flutter — one agent, any language, zero awkward translations.
 
-Official Flutter SDK for [Chataptor](https://chataptor.com). Integrate live customer support into your iOS, Android, or Web Flutter app in three lines of code. Your support team responds in their language; customers read in theirs — automatically, with no workflow change.
+Official Flutter SDK for [Chataptor](https://chataptor.com). Integrate live customer support into your iOS or Android Flutter app in three lines of code. Your support team responds in their language; customers read in theirs — automatically, with no workflow change.
+
+> **Platforms in v0.1.0:** iOS and Android are officially supported. Flutter Web works as a side-effect of pure-Dart core but is **best-effort** through v0.5.0 and officially supported from v0.6.0. Desktop works incidentally and is never promoted.
 
 ## Why Chataptor
 

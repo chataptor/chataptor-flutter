@@ -34,10 +34,6 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 Do not include `Co-Authored-By` or "generated with" footers.
 
-## CLA
-
-Significant contributions require a signed Contributor License Agreement. The GitHub bot will prompt you on your first PR.
-
 ## Code of conduct
 
 This project adheres to the [Code of Conduct](./CODE_OF_CONDUCT.md). By participating you agree to abide by it.
