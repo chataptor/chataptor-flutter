@@ -17,23 +17,22 @@ budget, …) see [`ARCHITECTURE.md`](./ARCHITECTURE.md). This file is about
 ## Feature parity with the production web widget
 
 The production Chataptor web widget (embedded on chataptor.com customer
-sites today) currently consumes more backend signals than the Flutter
-SDK does. Items below close that gap. Each row reflects what the
-Chataptor backend already serializes on the `site:X` channel join or
-broadcasts thereafter.
+sites today) consumes a set of backend signals on the `site:X` channel
+join and through subsequent broadcasts. The Flutter SDK is closing the
+remaining gap version by version.
 
-| Signal | Web widget | Flutter SDK (today) | Target |
-|---|---|---|---|
-| `welcome_message` (per-language) | ✅ first agent bubble | ⬜ ignored | 🟡 v0.1.0 |
-| `header_title` (per-language, e.g. "Customer Support") | ✅ header label | ⬜ ignored (hardcoded `Support`) | 🟡 v0.1.0 |
-| `agent:available` event (id, name, avatar_url, initials, color; up to 5) | ✅ avatar stack in header | ⬜ never subscribed | 🟡 v0.1.0 |
-| `agents:offline` event | ✅ offline state in header | ⬜ never subscribed | 🟡 v0.1.0 |
-| `offline_mode` (`auto`/`manual_offline`/`manual_online`) + `offline_message` | ✅ "We're closed" UX | ⬜ ignored | ⬜ **v0.2.0** |
-| `working_hours_enabled` + `next_available` timestamp | ✅ "Back Monday 09:00" | ⬜ ignored | ⬜ **v0.2.0** |
-| `typing_preview_enabled` | likely ✅ | ⬜ ignored | ⬜ **v0.3.0** |
-| Attachments (file upload, image preview) | ✅ paperclip button | ⬜ models exist (`Attachment`), no UI | ⬜ **v0.4.0** |
-| Emoji picker | ✅ | ⬜ | ⬜ **v0.4.0** |
-| `widget_open_on` (`hover`/`click`) | ✅ launcher behavior | n/a (mobile uses navigation) | n/a |
+| Signal | Web widget | Flutter SDK |
+|---|---|---|
+| `welcome_message` (per-language) | ✅ first agent bubble | ✅ v0.1.0 |
+| `header_title` (per-language) | ✅ header label | ✅ v0.1.0 |
+| `agent:available` event (id, name, avatar_url, initials, color; up to 5) | ✅ avatar stack | ✅ v0.1.0 |
+| `agents:offline` event | ✅ offline state | ✅ v0.1.0 |
+| `offline_mode` + `offline_message` | ✅ "We're closed" UX | 🟡 v0.2.0 |
+| `working_hours_enabled` + `next_available` | ✅ "Back Monday 09:00" | 🟡 v0.2.0 |
+| `typing_preview_enabled` | likely ✅ | 🟡 v0.3.0 |
+| Attachments (file upload, image preview) | ✅ paperclip button | 🟡 v0.4.0 (models exist) |
+| Emoji picker | ✅ | 🟡 v0.4.0 |
+| `widget_open_on` (`hover`/`click`) | ✅ launcher behaviour | n/a (mobile uses navigation) |
 
 ## v0.1.0 — Initial public release
 

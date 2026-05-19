@@ -1,0 +1,69 @@
+name: Publish
+
+# Per-package releases follow the monorepo tag convention:
+#   chataptor-v0.1.0           -> publishes packages/chataptor
+#   chataptor_flutter-v0.1.0   -> publishes packages/chataptor_flutter
+#
+# OIDC trusted publishing is configured per package on pub.dev
+# (Package admin -> Automated publishing -> link to this workflow).
+# No long-lived PUB_TOKEN secret is needed: dart-lang/setup-dart picks
+# up the GitHub OIDC token automatically when id-token: write is set.
+
+on:
+  push:
+    tags:
+      - 'chataptor-v*'
+      - 'chataptor_flutter-v*'
+
+jobs:
+  publish:
+    name: Publish to pub.dev
+    runs-on: ubuntu-latest
+
+    permissions:
+      # Required for OIDC token request used by `dart pub publish`.
+      id-token: write
+      # Read-only repo access for actions/checkout.
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dart-lang/setup-dart@v1
+
+      - name: Determine package from tag
+        id: pkg
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/chataptor-v* ]]; then
+            echo "dir=packages/chataptor"          >> "$GITHUB_OUTPUT"
+            echo "name=chataptor"                  >> "$GITHUB_OUTPUT"
+          elif [[ "${GITHUB_REF}" == refs/tags/chataptor_flutter-v* ]]; then
+            echo "dir=packages/chataptor_flutter"  >> "$GITHUB_OUTPUT"
+            echo "name=chataptor_flutter"          >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::Unrecognised tag pattern '${GITHUB_REF}' — expected 'chataptor-v*' or 'chataptor_flutter-v*'"
+            exit 1
+          fi
+
+      - name: Resolve workspace
+        # chataptor_flutter declares `resolution: workspace`, so pub get must
+        # run at the workspace root (the repo root pubspec.yaml), not in the
+        # individual package directory.
+        run: dart pub get
+
+      - name: Verify tag version matches pubspec
+        working-directory: ${{ steps.pkg.outputs.dir }}
+        run: |
+          pubspec_version=$(grep '^version:' pubspec.yaml | awk '{print $2}')
+          tag_version="${GITHUB_REF#refs/tags/${{ steps.pkg.outputs.name }}-v}"
+          if [[ "$pubspec_version" != "$tag_version" ]]; then
+            echo "::error::Tag version '$tag_version' does not match pubspec.yaml version '$pubspec_version' for ${{ steps.pkg.outputs.name }}"
+            exit 1
+          fi
+          echo "Publishing ${{ steps.pkg.outputs.name }} $pubspec_version"
+
+      - name: Publish
+        working-directory: ${{ steps.pkg.outputs.dir }}
+        # --force skips the interactive confirmation prompt; validation
+        # still runs as in `dart pub publish --dry-run`.
+        run: dart pub publish --force

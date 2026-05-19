@@ -12,7 +12,7 @@ unless new information has emerged (upstream deprecation, new Dart feature, etc.
 | 2 | Persona | Customer-only. Agent persona = separate product (not in this repo). |
 | 3 | License | MIT |
 | 4 | Publishing | Pub.dev verified publisher `chataptor.com`, OIDC trusted publishing, no long-lived tokens |
-| 5 | Source control | Public repo `github.com/chataptor/chataptor-flutter`; the Elixir/Phoenix backend lives in a separate private repository referenced only by role. |
+| 5 | Source control | Public repo `github.com/chataptor/chataptor-flutter`. The Chataptor backend is a separate closed-source codebase out of scope for this SDK; the SDK speaks to it over the standard Phoenix Channels wire protocol. |
 | 6 | Monorepo tooling | Melos 7.x + native Dart Pub Workspaces (complementary) |
 | 7 | Dart SDK floor | `^3.9.0` |
 | 8 | Flutter floor | `>=3.35.0` (first stable bundling Dart 3.9), tested pinned-floor + `stable` + `beta` in CI |
