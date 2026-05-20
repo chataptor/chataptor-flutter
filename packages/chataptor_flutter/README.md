@@ -6,6 +6,8 @@
 
 Official Flutter widgets for [Chataptor](https://chataptor.com?utm_source=pub.dev&utm_medium=referral&utm_campaign=chataptor_flutter&utm_content=readme_hero) — real-time multilingual customer support chat with built-in auto-translation.
 
+> **Early Adopter Program:** 6 months free, dedicated support, and a price-lock guarantee after the free period. [Check available spots →](https://chataptor.com?utm_source=pub.dev&utm_medium=referral&utm_campaign=chataptor_flutter&utm_content=readme_early_access)
+
 This package provides the `Chataptor` singleton, ready-to-use chat widgets, theming, and localization. It re-exports the full [`chataptor`](https://pub.dev/packages/chataptor) core, so you only need this one dependency.
 
 ## Install
