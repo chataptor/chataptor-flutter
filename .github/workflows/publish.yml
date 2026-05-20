@@ -62,7 +62,22 @@ jobs:
           fi
           echo "Publishing ${{ steps.pkg.outputs.name }} $pubspec_version"
 
+      - name: Check if already published
+        id: check
+        working-directory: ${{ steps.pkg.outputs.dir }}
+        run: |
+          version=$(grep '^version:' pubspec.yaml | awk '{print $2}')
+          status=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://pub.dev/api/packages/${{ steps.pkg.outputs.name }}/versions/$version")
+          if [ "$status" = "200" ]; then
+            echo "Version $version is already published on pub.dev — skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Publish
+        if: steps.check.outputs.skip != 'true'
         working-directory: ${{ steps.pkg.outputs.dir }}
         # --force skips the interactive confirmation prompt; validation
         # still runs as in `dart pub publish --dry-run`.
