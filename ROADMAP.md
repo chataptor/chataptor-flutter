@@ -98,15 +98,15 @@ real-time multilingual support.
 ⬜ Remove all `@experimental` annotations or graduate them.
 ⬜ Final dependency audit against direct-dep budget (`ARCHITECTURE.md` #25).
 
-## Cut from scope (no current plan)
+## Not planned
 
-These items appeared in early discussions and were intentionally rejected.
-Listed so they don't keep resurfacing:
+The following are explicitly out of scope. These decisions are unlikely
+to change without a substantially new constraint.
 
-- ❌ **Pre-chat forms / intake surveys / department routing** — backend doesn't model these. Adding to SDK = building a drawer feature. Chataptor's positioning ("real humans + AI translation layer", not "Intercom-style routed bot funnels") makes these out of character.
-- ❌ **AI-generated suggested replies on welcome** — would conflict with the "you're talking to a human" promise. Quick replies are only surfaced when backend explicitly sends `MessageType.quickReplies` from a bot node.
+- ❌ **Pre-chat forms / intake surveys / department routing** — Chataptor connects customers directly to available agents; pre-chat intake flows are not part of the product model.
+- ❌ **Client-side AI-generated suggested replies** — Quick replies are rendered only when the server sends `MessageType.quickReplies`; generating them client-side is not planned.
 - ❌ **End-to-end encryption** — fundamentally incompatible with server-side translation; locked in `ARCHITECTURE.md` #16.
-- ❌ **`eager` / `pushOnly` connection modes** — unrealistic on mobile (iOS kills background sockets within seconds); cut in favour of `lazy` + `foregroundActive`.
+- ❌ **`eager` / `pushOnly` connection modes** — unrealistic on mobile (iOS kills background sockets within seconds); `lazy` + `foregroundActive` cover all realistic use cases.
 
 ## Sources
 

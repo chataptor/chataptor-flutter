@@ -190,4 +190,4 @@ Code, identifiers, commit messages, dartdoc, pub.dev descriptions, READMEs, guid
 
 ## Last updated
 
-2026-05-19 — v0.1.0 release prep: shipped web parity (`ChataptorChatHeader` + `SiteConfig` + welcome injection + online-agent presence streams), bumped packages to `0.1.0`, scrubbed git history of internal backend references prior to opening the repo publicly.
+2026-05-20 — v0.1.0 published to pub.dev under verified publisher `chataptor.com`; both packages score 160/160; OIDC trusted publishing configured; Early Adopter Program callout added to package README files.
