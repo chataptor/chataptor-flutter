@@ -89,18 +89,6 @@ See the [getting-started guide](./docs/guides/getting-started.md) for theming, a
 | iOS | 12.0 |
 | Android | API 21 |
 
-## Roadmap
-
-| Version | Scope |
-|---------|-------|
-| **v0.1.0** | Anonymous customer chat · `ChataptorChatScreen` widget · EN + PL locales |
-| v0.2.0 | Identified customers (HMAC-verified) |
-| v0.3.0 | Push notifications |
-| v0.4.0 | File attachments · translation UI · quick replies · carousels |
-| v0.5.0 | 10 additional locales · accessibility (blocking CI) · `ChataptorBubble` / `ChataptorChatSheet` |
-| v0.6.0 | Flutter Web officially supported |
-| v1.0.0 | API stabilisation |
-
 ## License
 
 [MIT](./LICENSE) © 2026 Chataptor
