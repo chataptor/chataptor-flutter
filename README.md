@@ -7,11 +7,14 @@
 
 Official Flutter SDK for [Chataptor](https://chataptor.com). Integrate live customer support into your iOS or Android Flutter app in three lines of code. Your support team responds in their language; customers read in theirs — automatically, with no workflow change.
 
+> **Chataptor is free, forever.** No credit card, no trial. [Create your account at chataptor.com →](https://chataptor.com/register)
+
 > **Platforms in v0.1.0:** iOS and Android are officially supported. Flutter Web works as a side-effect of pure-Dart core but is **best-effort** through v0.5.0 and officially supported from v0.6.0. Desktop works incidentally and is never promoted.
 
 ## Why Chataptor
 
-- 🌍 **Real-time bidirectional auto-translation** — customer writes in Japanese, agent reads Polish, replies in Polish, customer reads Japanese. Sub-second round-trips.
+- 💸 **Free, forever** — the hosted Chataptor service is free; no credit card, no trial. The SDK is MIT-licensed.
+- 🌍 **Real-time bidirectional auto-translation** — customer writes in Japanese, agent reads Polish, replies in Polish, customer reads Japanese. 100+ languages, sub-second round-trips.
 - 📘 **Translation Memory + Glossary** — consistent terminology across every conversation. Brand terms and product names never get mangled in translation.
 - 📧 **Email threading** — customer closes the app mid-conversation, the agent replies, the customer receives an email and can reply by email. The full history stays unified.
 - 🎨 **Pure Dart** — no native SDK wrappers. Smaller binary, fewer platform-specific bugs, Flutter Web supported.

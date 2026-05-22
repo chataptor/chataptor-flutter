@@ -5,8 +5,8 @@ Five-minute walk-through from zero to working chat.
 ## 1. Prerequisites
 
 - Flutter `3.35.0` or newer. Older Flutter versions do not bundle Dart 3.9, which the SDK requires.
-- A Chataptor site (sign up at [chataptor.com](https://chataptor.com)). You will need:
-  - **Site ID** — shown in the admin console under *Settings → API*.
+- A Chataptor account — [create one for free at chataptor.com](https://chataptor.com/register). Chataptor is free, forever. From the admin console you will need:
+  - **Site ID** — shown under *Settings → API*.
   - **Widget key** — public API key for this site (starts with `pk_`).
 
 ## 2. Install

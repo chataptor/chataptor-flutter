@@ -6,7 +6,7 @@
 
 Pure-Dart headless core client for [Chataptor](https://chataptor.com?utm_source=pub.dev&utm_medium=referral&utm_campaign=chataptor&utm_content=readme_hero) — real-time multilingual customer support chat.
 
-> **Early Adopter Program:** 6 months free, dedicated support, and a price-lock guarantee after the free period. [Check available spots →](https://chataptor.com?utm_source=pub.dev&utm_medium=referral&utm_campaign=chataptor&utm_content=readme_early_access)
+> **Chataptor is free, forever.** Auto-translate customer conversations across 100+ languages and reach anyone, anywhere — no credit card, no trial. [Create your account →](https://chataptor.com/register?utm_source=pub.dev&utm_medium=referral&utm_campaign=chataptor&utm_content=readme_cta)
 
 **This package has no Flutter dependency.** Use it when you need a custom UI or when you are integrating Chataptor into a pure-Dart server or CLI context. For drop-in Flutter widgets, use [`chataptor_flutter`](https://pub.dev/packages/chataptor_flutter) instead — it re-exports everything in this package.
 

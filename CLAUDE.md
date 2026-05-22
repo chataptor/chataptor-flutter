@@ -190,4 +190,6 @@ Code, identifiers, commit messages, dartdoc, pub.dev descriptions, READMEs, guid
 
 ## Last updated
 
+2026-05-22 — v0.2.0 work landed on `main` (identified customers + `client.identify()`, `sessionIdleTimeout`, offline UX MVP, `showAppBar`, multi-instance docs). Pricing messaging swept across READMEs and pubspec descriptions to lead with **"Chataptor is free, forever"** and a `chataptor.com/register` CTA, replacing the previous Early Adopter Program callout.
+
 2026-05-20 — v0.1.0 published to pub.dev under verified publisher `chataptor.com`; both packages score 160/160; OIDC trusted publishing configured; Early Adopter Program callout added to package README files.
