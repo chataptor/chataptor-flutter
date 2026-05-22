@@ -1,18 +1,49 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/chataptor/chataptor-flutter/main/.github/assets/chataptor-logotype-white.png" alt="Chataptor" height="56">
-</p>
+<div align="center">
 
-# chataptor_flutter
+<img src="https://raw.githubusercontent.com/chataptor/chataptor-flutter/main/.github/assets/chataptor-logotype-white.png" alt="Chataptor" height="56">
 
-[![pub.dev](https://img.shields.io/pub/v/chataptor_flutter.svg)](https://pub.dev/packages/chataptor_flutter)
+<br>
+
+Drop-in Flutter widgets for [Chataptor](https://chataptor.com?utm_source=pub.dev&utm_medium=referral&utm_campaign=chataptor_flutter&utm_content=readme_hero) — real-time, auto-translated customer support chat.
+
+[![pub.dev](https://img.shields.io/pub/v/chataptor_flutter.svg?label=pub.dev)](https://pub.dev/packages/chataptor_flutter)
+[![pub points](https://img.shields.io/pub/points/chataptor_flutter?label=pub%20points)](https://pub.dev/packages/chataptor_flutter/score)
+[![likes](https://img.shields.io/pub/likes/chataptor_flutter?label=likes)](https://pub.dev/packages/chataptor_flutter/score)
 [![CI](https://github.com/chataptor/chataptor-flutter/actions/workflows/ci.yml/badge.svg)](https://github.com/chataptor/chataptor-flutter/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/chataptor/chataptor-flutter/blob/main/LICENSE)
 
-Official Flutter widgets for [Chataptor](https://chataptor.com?utm_source=pub.dev&utm_medium=referral&utm_campaign=chataptor_flutter&utm_content=readme_hero) — real-time multilingual customer support chat with built-in auto-translation.
+</div>
 
 > **Chataptor is free, forever.** Auto-translate customer conversations across 100+ languages and reach anyone, anywhere — no credit card, no trial. [Create your account →](https://chataptor.com/register?utm_source=pub.dev&utm_medium=referral&utm_campaign=chataptor_flutter&utm_content=readme_cta)
 
-This package provides the `Chataptor` singleton, ready-to-use chat widgets, theming, and localization. It re-exports the full [`chataptor`](https://pub.dev/packages/chataptor) core, so you only need this one dependency.
+## What you get
+
+| | |
+|---|---|
+| 🌍 | Auto-translate customer ↔ agent conversations across **100+ languages**, in real time |
+| 🎨 | `ChataptorChatScreen` + `ChataptorChatHeader` widgets that match your Material theme out of the box |
+| 📘 | Translation Memory + Glossary keep brand terms and product names consistent |
+| 📧 | Email threading — chat closes, agent replies, full history stays unified |
+| 🔓 | Pure-Dart core, MIT-licensed, no native wrappers, no black box |
+
+## In practice
+
+> A customer in Tokyo writes `注文した商品がまだ届いていません`.
+> Your agent reads `My order hasn't arrived yet.` in English and replies in English.
+> The customer reads the reply in Japanese — instantly, in the same chat.
+
+No language switching, no copy-paste, no Google Translate.
+
+## Contents
+
+- [Install](#install)
+- [Quickstart](#quickstart)
+- [Theming](#theming)
+- [Custom UI](#custom-ui)
+- [Testing](#testing)
+- [Documentation](#documentation)
+
+This package ships the `Chataptor` singleton, ready-to-use chat widgets, theming, and localization. It re-exports the full [`chataptor`](https://pub.dev/packages/chataptor) core, so this is the only dependency you need.
 
 ## Install
 
@@ -159,7 +190,8 @@ matching the production web widget on chataptor.com sites. Headless
 integrations get the same data so a custom header can show the same
 presence info.
 
-## Testing
+<details>
+<summary><strong>Testing</strong> — wire a fake client into your widget tests</summary>
 
 Inject a `FakeChataptorClient` via `ChataptorScope` to test your UI without a network connection:
 
@@ -198,6 +230,8 @@ void main() {
 
 Use `fake.inject` to drive the client into any state, and `fake.recorded` to assert on what the UI sent.
 
+</details>
+
 ## Requirements
 
 | | Minimum |
@@ -206,6 +240,17 @@ Use `fake.inject` to drive the client into any state, and `fake.recorded` to ass
 | Dart | 3.9.0 |
 | iOS | 12.0 |
 | Android | API 21 |
+
+## Documentation
+
+| | |
+|---|---|
+| [Getting started](https://github.com/chataptor/chataptor-flutter/blob/main/docs/guides/getting-started.md) | Five-minute walk-through from zero to working chat |
+| [Identified customers](https://github.com/chataptor/chataptor-flutter/blob/main/docs/guides/identified-customers.md) | HMAC verification recipe with server-side snippets |
+| [Multi-instance setup](https://github.com/chataptor/chataptor-flutter/blob/main/docs/guides/multi-instance.md) | Running multiple Chataptor sites in one app |
+| [Architecture](https://github.com/chataptor/chataptor-flutter/blob/main/ARCHITECTURE.md) | Locked design decisions |
+| [Changelog](https://github.com/chataptor/chataptor-flutter/blob/main/packages/chataptor_flutter/CHANGELOG.md) | Per-version release notes |
+| [Example app](https://github.com/chataptor/chataptor-flutter/tree/main/examples/quickstart) | Runnable demo |
 
 ## License
 

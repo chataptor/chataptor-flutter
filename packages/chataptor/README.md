@@ -1,18 +1,41 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/chataptor/chataptor-flutter/main/.github/assets/chataptor-logotype-white.png" alt="Chataptor" height="56">
-</p>
+<div align="center">
 
-# chataptor
+<img src="https://raw.githubusercontent.com/chataptor/chataptor-flutter/main/.github/assets/chataptor-logotype-white.png" alt="Chataptor" height="56">
 
-[![pub.dev](https://img.shields.io/pub/v/chataptor.svg)](https://pub.dev/packages/chataptor)
+<br>
+
+Pure-Dart headless client for [Chataptor](https://chataptor.com?utm_source=pub.dev&utm_medium=referral&utm_campaign=chataptor&utm_content=readme_hero) — real-time, auto-translated customer support chat.
+
+[![pub.dev](https://img.shields.io/pub/v/chataptor.svg?label=pub.dev)](https://pub.dev/packages/chataptor)
+[![pub points](https://img.shields.io/pub/points/chataptor?label=pub%20points)](https://pub.dev/packages/chataptor/score)
+[![likes](https://img.shields.io/pub/likes/chataptor?label=likes)](https://pub.dev/packages/chataptor/score)
 [![CI](https://github.com/chataptor/chataptor-flutter/actions/workflows/ci.yml/badge.svg)](https://github.com/chataptor/chataptor-flutter/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/chataptor/chataptor-flutter/blob/main/LICENSE)
 
-Pure-Dart headless core client for [Chataptor](https://chataptor.com?utm_source=pub.dev&utm_medium=referral&utm_campaign=chataptor&utm_content=readme_hero) — real-time multilingual customer support chat.
+</div>
 
 > **Chataptor is free, forever.** Auto-translate customer conversations across 100+ languages and reach anyone, anywhere — no credit card, no trial. [Create your account →](https://chataptor.com/register?utm_source=pub.dev&utm_medium=referral&utm_campaign=chataptor&utm_content=readme_cta)
 
-**This package has no Flutter dependency.** Use it when you need a custom UI or when you are integrating Chataptor into a pure-Dart server or CLI context. For drop-in Flutter widgets, use [`chataptor_flutter`](https://pub.dev/packages/chataptor_flutter) instead — it re-exports everything in this package.
+## What you get
+
+| | |
+|---|---|
+| 🌍 | Auto-translate customer ↔ agent conversations across **100+ languages**, in real time |
+| 📘 | Translation Memory + Glossary keep brand terms and product names consistent |
+| 📧 | Email threading — chat closes, agent replies, full history stays unified |
+| 🔓 | Pure-Dart core, MIT-licensed, no native wrappers, no black box |
+
+## In practice
+
+> A customer in Tokyo writes `注文した商品がまだ届いていません`.
+> Your agent reads `My order hasn't arrived yet.` in English and replies in English.
+> The customer reads the reply in Japanese — instantly, in the same chat.
+
+No language switching, no copy-paste, no Google Translate.
+
+## When to use this package
+
+Use `chataptor` directly when you need a fully custom UI, or when you are integrating Chataptor into a pure-Dart server or CLI context. For drop-in Flutter widgets, install [`chataptor_flutter`](https://pub.dev/packages/chataptor_flutter) — it re-exports everything in this package.
 
 ## Install
 
@@ -163,7 +186,8 @@ ChataptorConfig(
 )
 ```
 
-## Testing
+<details>
+<summary><strong>Testing</strong> — fakes for unit and widget tests</summary>
 
 Import `package:chataptor/testing.dart` in your test files — **never in production code**.
 
@@ -217,11 +241,23 @@ For testing the SDK transport layer itself, use `FakeChatTransport`.
 | `InMemoryChataptorStorage` | Resets between test runs |
 | `RecordingChataptorLogger` | Assert on log output |
 
+</details>
+
 ## Requirements
 
 | | Minimum |
 |-|---------|
 | Dart | 3.9.0 |
+
+## Documentation
+
+| | |
+|---|---|
+| [Getting started](https://github.com/chataptor/chataptor-flutter/blob/main/docs/guides/getting-started.md) | Five-minute walk-through from zero to working chat |
+| [Identified customers](https://github.com/chataptor/chataptor-flutter/blob/main/docs/guides/identified-customers.md) | HMAC verification recipe with server-side snippets |
+| [Multi-instance setup](https://github.com/chataptor/chataptor-flutter/blob/main/docs/guides/multi-instance.md) | Running multiple Chataptor sites in one app |
+| [Architecture](https://github.com/chataptor/chataptor-flutter/blob/main/ARCHITECTURE.md) | Locked design decisions |
+| [Changelog](https://github.com/chataptor/chataptor-flutter/blob/main/packages/chataptor/CHANGELOG.md) | Per-version release notes |
 
 ## License
 

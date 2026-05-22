@@ -7,8 +7,8 @@ issue_tracker: https://github.com/chataptor/chataptor-flutter/issues
 topics:
   - chat
   - support
+  - multilingual
   - widget
-  - realtime
   - translation
 
 environment:
