@@ -29,7 +29,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: dart-lang/setup-dart@v1
+      # Flutter ships with Dart, and the workspace includes
+      # `examples/quickstart` which depends on Flutter — using
+      # `dart-lang/setup-dart` here would fail `pub get` at the workspace
+      # root.
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: any
+          channel: stable
+          cache: true
 
       - name: Determine package from tag
         id: pkg
@@ -46,10 +54,10 @@ jobs:
           fi
 
       - name: Resolve workspace
-        # chataptor_flutter declares `resolution: workspace`, so pub get must
-        # run at the workspace root (the repo root pubspec.yaml), not in the
-        # individual package directory.
-        run: dart pub get
+        # chataptor_flutter declares `resolution: workspace`, so pub get
+        # must run at the workspace root (the repo root pubspec.yaml),
+        # not in the individual package directory.
+        run: flutter pub get
 
       - name: Verify tag version matches pubspec
         working-directory: ${{ steps.pkg.outputs.dir }}
