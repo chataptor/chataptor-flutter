@@ -124,6 +124,31 @@ void main() {
       expect(config.offlineMode, OfflineMode.auto);
     });
 
+    test('parses next_available as a UTC DateTime', () {
+      final config = SiteConfig.fromJson(const {
+        'next_available': '2026-06-01T07:00:00Z',
+      });
+      expect(config.nextAvailable, DateTime.utc(2026, 6, 1, 7));
+      expect(config.nextAvailable?.isUtc, isTrue);
+    });
+
+    test('next_available is null when absent', () {
+      final config = SiteConfig.fromJson(const {});
+      expect(config.nextAvailable, isNull);
+    });
+
+    test('next_available tolerates a malformed string', () {
+      final config = SiteConfig.fromJson(const {
+        'next_available': 'not-an-iso-date',
+      });
+      expect(config.nextAvailable, isNull);
+    });
+
+    test('next_available is null when not a string', () {
+      final config = SiteConfig.fromJson(const {'next_available': 1717225200});
+      expect(config.nextAvailable, isNull);
+    });
+
     test('raw payload is preserved for forward-compat', () {
       final payload = fullPayload();
       // Backend may add fields the SDK does not model yet — they must survive.

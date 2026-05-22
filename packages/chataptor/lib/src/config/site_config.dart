@@ -29,6 +29,12 @@ OfflineMode _offlineModeFromString(String? raw) {
   }
 }
 
+DateTime? _parseNextAvailable(Object? raw) {
+  if (raw is! String) return null;
+  final parsed = DateTime.tryParse(raw);
+  return parsed?.toUtc();
+}
+
 /// Per-language overrides for the widget chrome and copy.
 ///
 /// The backend stores one row per supported language under a [SiteConfig].
@@ -141,6 +147,7 @@ class SiteConfig {
     this.typingPreviewEnabled = false,
     this.autoTranslationsEnabled = false,
     this.widgetOpenOn = 'hover',
+    this.nextAvailable,
     this.languageVariants = const [],
     this.raw = const {},
   });
@@ -167,6 +174,7 @@ class SiteConfig {
       autoTranslationsEnabled:
           (json['auto_translations_enabled'] as bool?) ?? false,
       widgetOpenOn: (json['widget_open_on'] as String?) ?? 'hover',
+      nextAvailable: _parseNextAvailable(json['next_available']),
       languageVariants: List<SiteLanguageVariant>.unmodifiable(variants),
       raw: Map<String, dynamic>.unmodifiable(json),
     );
@@ -196,6 +204,15 @@ class SiteConfig {
   /// consumed by the Flutter SDK (which mounts via navigation), kept for
   /// merchants who share configuration across surfaces.
   final String widgetOpenOn;
+
+  /// Estimated wall-clock instant when the next agent becomes available,
+  /// as reported by the backend (typically while [workingHoursEnabled] is
+  /// `true` and the current moment falls outside the configured window).
+  ///
+  /// Always in UTC when present. Always `null` when the backend has not
+  /// computed or chosen to expose this value — consumers must treat it as
+  /// best-effort UX hint, not as a guarantee.
+  final DateTime? nextAvailable;
 
   /// All per-language variants the merchant has configured, in arrival
   /// order.
@@ -243,6 +260,7 @@ class SiteConfig {
       other.typingPreviewEnabled == typingPreviewEnabled &&
       other.autoTranslationsEnabled == autoTranslationsEnabled &&
       other.widgetOpenOn == widgetOpenOn &&
+      other.nextAvailable == nextAvailable &&
       _listEquals(other.languageVariants, languageVariants);
 
   @override
@@ -254,6 +272,7 @@ class SiteConfig {
     typingPreviewEnabled,
     autoTranslationsEnabled,
     widgetOpenOn,
+    nextAvailable,
     Object.hashAll(languageVariants),
   );
 }
