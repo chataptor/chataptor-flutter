@@ -287,6 +287,98 @@ void main() {
     expect(find.byIcon(Icons.close), findsNothing);
   });
 
+  testWidgets(
+    'manualOffline: composer send is disabled and offline banner renders',
+    (tester) async {
+      final transport = FakeChatTransport();
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      transport.inject.joinPayload('site:abc', {
+        'site_config': {
+          'widget_language': 'en',
+          'offline_mode': 'manual_offline',
+          'language_variants': [
+            {
+              'language_code': 'en',
+              'is_default': true,
+              'offline_title': "We're offline",
+              'offline_subtitle': 'Leave a message and we will get back.',
+            },
+          ],
+        },
+      });
+      await Chataptor.init(
+        siteId: 'abc',
+        widgetKey: 'pk_x',
+        apiUrl: Uri.parse('http://localhost:4000'),
+        transport: transport,
+      );
+
+      await tester.pumpWidget(const MaterialApp(home: ChataptorChatScreen()));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Composer send button must be disabled — even with text — when offline.
+      await tester.enterText(find.byType(TextField), 'hi');
+      await tester.pump();
+      expect(
+        tester
+            .widget<IconButton>(
+              find.widgetWithIcon(IconButton, Icons.send_rounded),
+            )
+            .onPressed,
+        isNull,
+      );
+
+      // Offline banner surfaces the variant-supplied copy.
+      expect(find.text("We're offline"), findsOneWidget);
+      expect(
+        find.text('Leave a message and we will get back.'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'manualOffline without variant copy: banner falls back to l10n',
+    (tester) async {
+      final transport = FakeChatTransport();
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      transport.inject.joinPayload('site:abc', {
+        'site_config': {'offline_mode': 'manual_offline'},
+      });
+      await Chataptor.init(
+        siteId: 'abc',
+        widgetKey: 'pk_x',
+        apiUrl: Uri.parse('http://localhost:4000'),
+        transport: transport,
+      );
+
+      await tester.pumpWidget(const MaterialApp(home: ChataptorChatScreen()));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Default English fallback strings.
+      expect(find.textContaining('Currently offline'), findsOneWidget);
+    },
+  );
+
+  testWidgets('auto mode renders no offline banner', (tester) async {
+    final transport = FakeChatTransport();
+    transport.inject.conversationCreated('site:abc', 'conv1');
+    transport.inject.joinPayload('site:abc', {
+      'site_config': {'offline_mode': 'auto'},
+    });
+    await Chataptor.init(
+      siteId: 'abc',
+      widgetKey: 'pk_x',
+      apiUrl: Uri.parse('http://localhost:4000'),
+      transport: transport,
+    );
+
+    await tester.pumpWidget(const MaterialApp(home: ChataptorChatScreen()));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.textContaining('Currently offline'), findsNothing);
+  });
+
   testWidgets('foregroundActive mode does NOT disconnect on dispose', (
     tester,
   ) async {

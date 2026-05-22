@@ -27,6 +27,8 @@ class ChataptorLocalizations {
     required this.headerOffline,
     required this.headerDefaultTitle,
     required this.poweredByPrefix,
+    required this.offlineBannerTitle,
+    required this.offlineBannerSubtitle,
   });
 
   /// English strings.
@@ -50,6 +52,8 @@ class ChataptorLocalizations {
     headerOffline: 'Offline',
     headerDefaultTitle: 'Support',
     poweredByPrefix: 'Powered by ',
+    offlineBannerTitle: 'Currently offline',
+    offlineBannerSubtitle: "We'll reply as soon as we're back.",
   );
 
   /// Polish strings.
@@ -73,6 +77,8 @@ class ChataptorLocalizations {
     headerOffline: 'Offline',
     headerDefaultTitle: 'Wsparcie',
     poweredByPrefix: 'Wspierane przez ',
+    offlineBannerTitle: 'Aktualnie offline',
+    offlineBannerSubtitle: 'Odpowiemy, gdy tylko wrócimy.',
   );
 
   /// Locales supported out of the box in v0.1.0.
@@ -138,6 +144,16 @@ class ChataptorLocalizations {
   /// localized.
   final String poweredByPrefix;
 
+  /// Headline shown in the offline banner when the merchant has manually
+  /// taken the widget offline. Variant-level `offline_title` from
+  /// `SiteLanguageVariant` takes precedence when present.
+  final String offlineBannerTitle;
+
+  /// Body shown under [offlineBannerTitle] explaining what happens to the
+  /// customer's eventual message. Variant-level `offline_subtitle` from
+  /// `SiteLanguageVariant` takes precedence when present.
+  final String offlineBannerSubtitle;
+
   /// Returns the nearest [ChataptorLocalizations] from the widget tree, or
   /// [ChataptorLocalizations.en] if none was provided.
   static ChataptorLocalizations of(BuildContext context) {
@@ -174,6 +190,8 @@ class ChataptorLocalizations {
     String? headerOffline,
     String? headerDefaultTitle,
     String? poweredByPrefix,
+    String? offlineBannerTitle,
+    String? offlineBannerSubtitle,
   }) {
     return ChataptorLocalizations(
       typeMessage: typeMessage ?? this.typeMessage,
@@ -195,6 +213,9 @@ class ChataptorLocalizations {
       headerOffline: headerOffline ?? this.headerOffline,
       headerDefaultTitle: headerDefaultTitle ?? this.headerDefaultTitle,
       poweredByPrefix: poweredByPrefix ?? this.poweredByPrefix,
+      offlineBannerTitle: offlineBannerTitle ?? this.offlineBannerTitle,
+      offlineBannerSubtitle:
+          offlineBannerSubtitle ?? this.offlineBannerSubtitle,
     );
   }
 }

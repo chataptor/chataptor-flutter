@@ -129,6 +129,14 @@ class _ChataptorChatScreenState extends State<ChataptorChatScreen> {
           client.config.translation.customerLanguage,
         );
 
+    final isOffline = _siteConfig?.offlineMode == OfflineMode.manualOffline;
+    final variant = _siteConfig?.variantFor(
+      client.config.translation.customerLanguage,
+    );
+    final offlineTitle = variant?.offlineTitle ?? loc.offlineBannerTitle;
+    final offlineSubtitle =
+        variant?.offlineSubtitle ?? loc.offlineBannerSubtitle;
+
     return Scaffold(
       backgroundColor: theme.backgroundColor,
       appBar: widget.showAppBar
@@ -166,10 +174,16 @@ class _ChataptorChatScreenState extends State<ChataptorChatScreen> {
               isLoading: _isLoading,
             ),
           ),
+          if (isOffline)
+            _OfflineBanner(
+              title: offlineTitle,
+              subtitle: offlineSubtitle,
+              theme: theme,
+            ),
           if (widget.showPoweredBy) const _PoweredByBanner(),
           ChataptorComposer(
             theme: theme,
-            enabled: _canSendMessage,
+            enabled: _canSendMessage && !isOffline,
             onSend: (text) async {
               if (client.currentConnectionState is! Connected) return;
               final result = await client.sendMessage(text);
@@ -191,6 +205,49 @@ class _ChataptorChatScreenState extends State<ChataptorChatScreen> {
                 });
               }
             },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OfflineBanner extends StatelessWidget {
+  const _OfflineBanner({
+    required this.title,
+    required this.subtitle,
+    required this.theme,
+  });
+
+  final String title;
+  final String subtitle;
+  final ChataptorTheme theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    return Container(
+      width: double.infinity,
+      color: theme.surfaceColor,
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: onSurface.withValues(alpha: 0.85),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: TextStyle(
+              fontSize: 12,
+              color: onSurface.withValues(alpha: 0.6),
+            ),
           ),
         ],
       ),
