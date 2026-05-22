@@ -27,8 +27,8 @@ remaining gap version by version.
 | `header_title` (per-language) | ✅ header label | ✅ v0.1.0 |
 | `agent:available` event (id, name, avatar_url, initials, color; up to 5) | ✅ avatar stack | ✅ v0.1.0 |
 | `agents:offline` event | ✅ offline state | ✅ v0.1.0 |
-| `offline_mode` + `offline_message` | ✅ "We're closed" UX | 🟡 v0.2.0 |
-| `working_hours_enabled` + `next_available` | ✅ "Back Monday 09:00" | 🟡 v0.2.0 |
+| `offline_mode` + `offline_message` | ✅ "We're closed" UX | ✅ v0.2.0 |
+| `working_hours_enabled` + `next_available` | ✅ "Back Monday 09:00" | 🟡 v0.3.0 |
 | `typing_preview_enabled` | likely ✅ | 🟡 v0.3.0 |
 | Attachments (file upload, image preview) | ✅ paperclip button | 🟡 v0.4.0 (models exist) |
 | Emoji picker | ✅ | 🟡 v0.4.0 |
@@ -60,12 +60,12 @@ real-time multilingual support.
 
 ## v0.2.0 — Identified customers + offline awareness
 
-⬜ **Identified customers:** `CustomerIdentity.identifiedVerified` with HMAC verification hash; merchant-side recipe in docs.
-⬜ **`sessionIdleTimeout`** config — auto-clearSession after N hours of inactivity.
-⬜ **Offline mode + business hours UX:** consume `offline_mode` + `next_available` → block composer + show "We're back Monday 09:00 (UTC)" message in header. Honour `manual_offline` / `manual_online` overrides.
-⬜ **`showAppBar: bool`** for sheet/dialog hosts that don't want their own AppBar.
-⬜ **Server-controlled `showPoweredBy`** — backend flag overrides client white-label opt-out for plan tiers that require attribution.
-⬜ **`ChataptorScope` documentation hardening** — clearer multi-instance examples.
+✅ **Identified customers** — `CustomerIdentity` accepts an optional `verificationHash` so verified identities surface to agents. Server-side recipes (Elixir, Ruby, Node.js, PHP, Python) live in [`docs/guides/identified-customers.md`](./docs/guides/identified-customers.md).
+✅ **`client.identify()`** — mid-session migration from anonymous to identified, preserving conversation continuity across the switch.
+✅ **`sessionIdleTimeout`** — opt-in auto-expiry of idle guest sessions, configurable per merchant.
+✅ **Offline-mode UX** — `ChataptorChatScreen` consumes `SiteConfig.offlineMode` and surfaces a banner + disabled composer when the merchant has marked the widget offline. Per-language variant copy is honoured; localized fallbacks ship for EN and PL.
+✅ **`showAppBar: bool`** on `ChataptorChatScreen` for sheet, dialog, and drawer hosts that already provide their own chrome.
+✅ **Multi-instance guidance** — [`docs/guides/multi-instance.md`](./docs/guides/multi-instance.md) walks through running more than one Chataptor site from a single binary.
 
 ## v0.3.0 — Push + typing indicators
 
