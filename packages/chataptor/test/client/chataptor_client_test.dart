@@ -573,6 +573,189 @@ void main() {
     });
   });
 
+  group('ChataptorClient sessionIdleTimeout', () {
+    ChataptorConfig idleConfig({Duration? timeout}) => ChataptorConfig(
+      siteId: 'abc',
+      widgetKey: 'pk_x',
+      apiUrl: Uri.parse('http://localhost:4000'),
+      sessionIdleTimeout: timeout,
+    );
+
+    test('when stored last_activity is older than the timeout, '
+        'connect clears the guest session before joining', () async {
+      final transport = FakeChatTransport();
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      final storage = InMemoryChataptorStorage();
+      // Pretend a previous session left a guestId and a stale activity ts.
+      await storage.writeString(
+        'chataptor.guest_id.abc',
+        'pre-existing-guest-uuid',
+      );
+      await storage.writeString(
+        'chataptor.last_activity_at.abc',
+        DateTime.now()
+            .toUtc()
+            .subtract(const Duration(hours: 48))
+            .toIso8601String(),
+      );
+
+      final client = ChataptorClient.internal(
+        config: idleConfig(timeout: const Duration(hours: 24)),
+        transport: transport,
+        storage: storage,
+      );
+      await client.connect();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      // The stale guest was cleared and a fresh one was allocated.
+      final newGuest = await storage.readString('chataptor.guest_id.abc');
+      expect(newGuest, isNotNull);
+      expect(newGuest, isNot('pre-existing-guest-uuid'));
+    });
+
+    test('when stored last_activity is within the timeout, '
+        'connect preserves the existing guestId', () async {
+      final transport = FakeChatTransport();
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      final storage = InMemoryChataptorStorage();
+      await storage.writeString(
+        'chataptor.guest_id.abc',
+        'pre-existing-guest-uuid',
+      );
+      await storage.writeString(
+        'chataptor.last_activity_at.abc',
+        DateTime.now()
+            .toUtc()
+            .subtract(const Duration(minutes: 5))
+            .toIso8601String(),
+      );
+
+      final client = ChataptorClient.internal(
+        config: idleConfig(timeout: const Duration(hours: 24)),
+        transport: transport,
+        storage: storage,
+      );
+      await client.connect();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(
+        await storage.readString('chataptor.guest_id.abc'),
+        'pre-existing-guest-uuid',
+      );
+    });
+
+    test(
+      'when sessionIdleTimeout is null, connect ignores any stored timestamp',
+      () async {
+        final transport = FakeChatTransport();
+        transport.inject.conversationCreated('site:abc', 'conv1');
+        final storage = InMemoryChataptorStorage();
+        await storage.writeString(
+          'chataptor.guest_id.abc',
+          'pre-existing-guest-uuid',
+        );
+        await storage.writeString(
+          'chataptor.last_activity_at.abc',
+          DateTime.now()
+              .toUtc()
+              .subtract(const Duration(days: 365))
+              .toIso8601String(),
+        );
+
+        final client = ChataptorClient.internal(
+          config: idleConfig(),
+          transport: transport,
+          storage: storage,
+        );
+        await client.connect();
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+
+        // Timeout disabled → guest is kept regardless of staleness.
+        expect(
+          await storage.readString('chataptor.guest_id.abc'),
+          'pre-existing-guest-uuid',
+        );
+      },
+    );
+
+    test(
+      'a received message refreshes the stored last_activity timestamp',
+      () async {
+        final transport = FakeChatTransport();
+        transport.inject.conversationCreated('site:abc', 'conv1');
+        final storage = InMemoryChataptorStorage();
+        final client = ChataptorClient.internal(
+          config: idleConfig(timeout: const Duration(hours: 24)),
+          transport: transport,
+          storage: storage,
+        );
+        await client.connect();
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        expect(
+          await storage.readString('chataptor.last_activity_at.abc'),
+          isNull,
+        );
+
+        transport.inject.event(
+          const MessageReceived(
+            topic: 'conversation:conv1',
+            event: 'message:received',
+            payload: {
+              'message': {
+                'msg_id': 'msg-1',
+                'body_src': 'Hi',
+                'author': 'agent',
+              },
+            },
+          ),
+        );
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+
+        final ts = await storage.readString('chataptor.last_activity_at.abc');
+        expect(ts, isNotNull);
+        // Parses as a valid recent UTC instant.
+        final parsed = DateTime.parse(ts!);
+        expect(parsed.isUtc, isTrue);
+        expect(
+          DateTime.now().toUtc().difference(parsed).inSeconds,
+          lessThan(5),
+        );
+      },
+    );
+
+    test(
+      'successful send refreshes the stored last_activity timestamp',
+      () async {
+        final transport = FakeChatTransport();
+        transport.inject.conversationCreated('site:abc', 'conv1');
+        transport.inject.replyFor(
+          topic: 'conversation:conv1',
+          event: 'message:send',
+          result: const PushOk({
+            'message': {'msg_id': 'sent-1'},
+          }),
+        );
+        final storage = InMemoryChataptorStorage();
+        final client = ChataptorClient.internal(
+          config: idleConfig(timeout: const Duration(hours: 24)),
+          transport: transport,
+          storage: storage,
+        );
+        await client.connect();
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+
+        final result = await client.sendMessage('hello');
+        expect(result, isA<SendSuccess>());
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+
+        expect(
+          await storage.readString('chataptor.last_activity_at.abc'),
+          isNotNull,
+        );
+      },
+    );
+  });
+
   group('ChataptorClient identify()', () {
     test(
       'with the same identity is a no-op — no extra channel joins',

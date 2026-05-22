@@ -89,6 +89,36 @@ class ChataptorClient {
 
   String _siteTopic() => 'site:${config.siteId}';
   String _conversationTopic() => 'conversation:$_conversationId';
+  String _lastActivityStorageKey() =>
+      'chataptor.last_activity_at.${config.siteId}';
+
+  Future<void> _touchLastActivity() async {
+    if (config.sessionIdleTimeout == null) return;
+    await _storage.writeString(
+      _lastActivityStorageKey(),
+      DateTime.now().toUtc().toIso8601String(),
+    );
+  }
+
+  /// Reads the persisted last-activity timestamp and — when it exists,
+  /// parses cleanly, and falls outside [ChataptorConfig.sessionIdleTimeout] —
+  /// clears the guest session before the upcoming channel join. No-ops
+  /// when the timeout is disabled or no prior activity has been recorded.
+  Future<void> _enforceSessionIdleTimeout() async {
+    final timeout = config.sessionIdleTimeout;
+    if (timeout == null) return;
+    final stored = await _storage.readString(_lastActivityStorageKey());
+    if (stored == null) return;
+    final last = DateTime.tryParse(stored);
+    if (last == null) return;
+    if (DateTime.now().toUtc().difference(last.toUtc()) <= timeout) return;
+    await _guestIdStore.clear();
+    await _storage.delete(_lastActivityStorageKey());
+    _seenMessageIds.clear();
+    _messageHistory.clear();
+    _siteConfigStream.clear();
+    _onlineAgentsStream.add(const []);
+  }
 
   Map<String, dynamic> _buildSiteJoinParams() {
     final lang = config.translation.customerLanguage;
@@ -156,6 +186,7 @@ class ChataptorClient {
   Future<void> connect() async {
     _requireNotDisposed();
     if (currentConnectionState is Connected) return;
+    await _enforceSessionIdleTimeout();
     _connectionState.add(const Connecting());
 
     final transportConfig = TransportConfig(
@@ -520,6 +551,7 @@ class ChataptorClient {
   SendResult _handleSendOk(Map<String, dynamic> response, MessageDraft draft) {
     final msgId = _extractMsgId(response);
     if (msgId != null) _seenMessageIds.add(msgId);
+    unawaited(_touchLastActivity());
     return SendSuccess(draft);
   }
 
@@ -547,6 +579,7 @@ class ChataptorClient {
 
     _messageHistory.add(message);
     _messages.add(message);
+    unawaited(_touchLastActivity());
     config.hooks.onMessageReceived?.call(message);
   }
 

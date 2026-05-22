@@ -34,6 +34,7 @@ class ChataptorConfig {
     this.storage,
     this.httpClient,
     this.logger = const NoOpChataptorLogger(),
+    this.sessionIdleTimeout,
   }) : apiUrl = apiUrl ?? Uri.parse('https://chataptor.com'),
        translation = translation ?? TranslationConfig.auto(),
        push = push ?? PushConfig.disabled() {
@@ -82,6 +83,16 @@ class ChataptorConfig {
   /// Logger.
   final ChataptorLogger logger;
 
+  /// When non-null, the SDK persists a `last_activity_at` timestamp on
+  /// every send and receive, and — at the start of each `ChataptorClient`
+  /// `connect()` — compares that stamp against `now`. When the gap
+  /// exceeds [sessionIdleTimeout], the guest session is cleared before
+  /// the channel join so the customer rejoins on a fresh conversation
+  /// thread instead of resurrecting a stale one.
+  ///
+  /// Defaults to `null` (no idle expiry). Typical values: 24h–7 days.
+  final Duration? sessionIdleTimeout;
+
   /// Returns a copy with the given fields overridden.
   ChataptorConfig copyWith({
     String? siteId,
@@ -96,6 +107,7 @@ class ChataptorConfig {
     ChataptorStorage? storage,
     ChataptorHttpClient? httpClient,
     ChataptorLogger? logger,
+    Duration? sessionIdleTimeout,
   }) {
     return ChataptorConfig(
       siteId: siteId ?? this.siteId,
@@ -110,6 +122,7 @@ class ChataptorConfig {
       storage: storage ?? this.storage,
       httpClient: httpClient ?? this.httpClient,
       logger: logger ?? this.logger,
+      sessionIdleTimeout: sessionIdleTimeout ?? this.sessionIdleTimeout,
     );
   }
 }

@@ -22,6 +22,16 @@ void main() {
     expect(config.features, const FeatureToggles());
     expect(config.push.mode, PushMode.disabled);
     expect(config.hooks, const ChataptorHooks());
+    expect(config.sessionIdleTimeout, isNull);
+  });
+
+  test('ChataptorConfig accepts sessionIdleTimeout', () {
+    final config = ChataptorConfig(
+      siteId: 'abc',
+      widgetKey: 'pk_x',
+      sessionIdleTimeout: const Duration(hours: 24),
+    );
+    expect(config.sessionIdleTimeout, const Duration(hours: 24));
   });
 
   test('ChataptorConfig throws on empty siteId', () {
