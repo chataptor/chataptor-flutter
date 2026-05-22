@@ -97,5 +97,34 @@ void main() {
         expect(fake.recorded.clearSessionCalls, 1);
       },
     );
+
+    test(
+      'identify() records the call and exposes the last identity passed',
+      () async {
+        final fake = FakeChataptorClient();
+        const identity = CustomerIdentity(
+          id: 'user-42',
+          email: 'jane@example.com',
+        );
+
+        await fake.identify(identity);
+
+        expect(fake.recorded.identifyCalls, [identity]);
+      },
+    );
+
+    test(
+      'identify() with the same identity twice records both calls in order',
+      () async {
+        final fake = FakeChataptorClient();
+        const a = CustomerIdentity(id: 'user-1');
+        const b = CustomerIdentity(id: 'user-2');
+
+        await fake.identify(a);
+        await fake.identify(b);
+
+        expect(fake.recorded.identifyCalls, [a, b]);
+      },
+    );
   });
 }

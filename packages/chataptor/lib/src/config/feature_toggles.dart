@@ -3,16 +3,16 @@ import 'package:meta/meta.dart';
 
 /// Configuration for file attachment handling.
 ///
-/// Attachments are a v0.4.0 feature — in v0.1.0 the composer does not
+/// Attachments are a v0.4.0 feature — until then the composer does not
 /// expose a picker and the backend upload wiring is not implemented. The
 /// default is therefore `enabled: false`; the type exists ahead of its
 /// features so `ChataptorConfig` does not have to change shape when
 /// attachments land.
 @immutable
 class AttachmentConfig {
-  /// Creates an [AttachmentConfig]. In v0.1.0 `enabled` defaults to `false`;
-  /// merchants may opt in experimentally but the composer will not honour
-  /// it until v0.4.0.
+  /// Creates an [AttachmentConfig]. `enabled` defaults to `false`;
+  /// merchants may opt in experimentally but the composer will not
+  /// honour it until v0.4.0.
   const AttachmentConfig({
     this.enabled = false,
     this.maxSizeMB = 10,
@@ -20,7 +20,7 @@ class AttachmentConfig {
   });
 
   /// Whether the composer exposes an attachment picker. Honoured from
-  /// v0.4.0; ignored in v0.1.0 (no picker widget exists yet).
+  /// v0.4.0; ignored before then (no picker widget exists yet).
   final bool enabled;
 
   /// Maximum size per attachment in megabytes.

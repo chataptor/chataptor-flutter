@@ -177,6 +177,10 @@ Locked architectural decisions. Do **not** re-litigate without new evidence. Ful
 - ❌ Re-open decisions from `ARCHITECTURE.md` without new information.
 - ❌ Reference the private backend repo or agent mobile app repo by name in public artifacts (commits, PR descriptions, public docs). Both remain unnamed in this open-source project.
 
+### Public artifact discipline
+
+Every file in this repo and every git artifact (commit messages, PR descriptions, branch names) is public and permanent. The same applies to anything that ends up on pub.dev — CHANGELOG, dartdoc, README, pubspec description. Describe SDK behaviour from the client's perspective: what the SDK sends, what it accepts in return. When unsure whether a phrasing crosses the line, ask before committing.
+
 ## Language
 
 User-facing responses and conversation: **Polish**, preserving all diacritics (`ą ć ę ł ń ó ś ź ż`). Never substitute ASCII for accented characters.
@@ -189,6 +193,8 @@ Code, identifiers, commit messages, dartdoc, pub.dev descriptions, READMEs, guid
 - **Chataptor agent mobile app** — separate private Flutter app for agents (not customers). Not in scope of this SDK.
 
 ## Last updated
+
+2026-05-22 — v0.2.0 hardening: both pubspecs bumped `0.1.0` → `0.2.0` (incl. `chataptor: ^0.2.0` in `chataptor_flutter`, examples dep, install snippets, `user_agent` constant). `identify()` now throws `ChataptorStateError` when called during `Connecting` / `Reconnecting`; `sessionIdleTimeout` is documented as winning over `identify()` continuity. `clearSession()` clears the persisted `last_activity_at`. `ChataptorClient.internal` now shares a single in-memory storage instance between `_storage` and the internal `GuestIdStore`. `FakeChataptorClient` gained an `identify()` stub + `recorded.identifyCalls`. 213 + 59 tests green, analyze + format-check clean, `chataptor` pana 160/160; `chataptor_flutter` pana is the known publish-order 50/160 until `chataptor 0.2.0` lands on pub.dev. Ready for manual smoke testing.
 
 2026-05-22 — v0.2.0 work landed on `main` (identified customers + `client.identify()`, `sessionIdleTimeout`, offline UX MVP, `showAppBar`, multi-instance docs). Pricing messaging swept across READMEs and pubspec descriptions to lead with **"Chataptor is free, forever"** and a `chataptor.com/register` CTA, replacing the previous Early Adopter Program callout.
 

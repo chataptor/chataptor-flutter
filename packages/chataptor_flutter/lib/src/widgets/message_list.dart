@@ -4,7 +4,7 @@ import 'package:chataptor_flutter/src/theme/chataptor_theme.dart';
 import 'package:chataptor_flutter/src/widgets/message_bubble.dart';
 import 'package:flutter/material.dart';
 
-/// A scrollable list of [Message]s. v0.1.0 uses [ListView.builder] with
+/// A scrollable list of [Message]s. Uses [ListView.builder] with
 /// `reverse: true` for new-message-at-bottom semantics. v0.6.0 migrates
 /// to `super_sliver_list` for 1000+-message performance (per design spec
 /// §7.10).

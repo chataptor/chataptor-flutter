@@ -2,7 +2,8 @@ import 'package:meta/meta.dart';
 
 /// How the merchant has configured the widget's availability surface.
 ///
-/// Mirrors the backend's `Site.offline_mode` field. The SDK consumes this
+/// Mirrors the `offline_mode` reported on the `site_config` payload.
+/// The SDK consumes this
 /// value to decide whether to show online/offline UX in v0.2.0 — for now
 /// it is parsed and exposed for downstream code (and the headless demo)
 /// to react to as it sees fit.
@@ -37,7 +38,7 @@ DateTime? _parseNextAvailable(Object? raw) {
 
 /// Per-language overrides for the widget chrome and copy.
 ///
-/// The backend stores one row per supported language under a [SiteConfig].
+/// One variant per supported language is delivered under a [SiteConfig].
 /// The customer's preferred language picks one variant — its
 /// `welcomeMessage`, `headerTitle`, and offline copy take precedence over
 /// the site-level fallbacks.

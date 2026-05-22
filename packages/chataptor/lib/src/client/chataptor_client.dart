@@ -34,17 +34,30 @@ class ChataptorClient {
     : this.internal(config: config, transport: PhoenixSocketTransport());
 
   /// Internal / test entry point that lets callers inject a transport.
+  ///
+  /// When [storage] is omitted, falls back to [ChataptorConfig.storage] and
+  /// finally to a fresh [InMemoryChataptorStorage]. The resolved instance
+  /// is shared between the client's own state and the internal
+  /// [GuestIdStore] — they never operate on two different in-memory
+  /// backings.
   ChataptorClient.internal({
     required ChataptorConfig config,
     required ChatTransport transport,
     ChataptorStorage? storage,
+  }) : this._withStorage(
+         config: config,
+         transport: transport,
+         storage: storage ?? config.storage ?? InMemoryChataptorStorage(),
+       );
+
+  ChataptorClient._withStorage({
+    required ChataptorConfig config,
+    required ChatTransport transport,
+    required ChataptorStorage storage,
   }) : _config = config,
        _transport = transport,
-       _storage = storage ?? config.storage ?? InMemoryChataptorStorage(),
-       _guestIdStore = GuestIdStore(
-         storage: storage ?? config.storage ?? InMemoryChataptorStorage(),
-         siteId: config.siteId,
-       ) {
+       _storage = storage,
+       _guestIdStore = GuestIdStore(storage: storage, siteId: config.siteId) {
     _connectionState.add(const Disconnected(DisconnectReason.userRequested));
     _transport.connectionState.listen(_handleTransportState);
     _transport.events.listen(_handleTransportEvent);
@@ -76,9 +89,9 @@ class ChataptorClient {
   /// Active conversation ID, set after `conversation:create` succeeds.
   String? _conversationId;
 
-  /// Guards against duplicate `message:received` pushes for the same server
-  /// message (caused by a double PubSub subscription on the backend) and
-  /// suppresses the server echo of the customer's own sent messages.
+  /// Guards against duplicate `message:received` pushes for the same
+  /// server message and suppresses the server echo of the customer's
+  /// own sent messages.
   final Set<String> _seenMessageIds = {};
 
   /// In-memory cache of all messages received in this session (history +
@@ -165,8 +178,9 @@ class ChataptorClient {
   /// `site:X` join. Replays the current value to new listeners.
   Stream<SiteConfig> get siteConfigStream => _siteConfigStream.stream;
 
-  /// Snapshot of agents the backend reports as currently online for this
-  /// site, in arrival order (backend caps the list at 5).
+  /// Snapshot of agents currently reported as online for this site, in
+  /// arrival order. The list is capped on the wire and typically holds
+  /// at most a handful of entries.
   ///
   /// Empty when no `agent:available` event has arrived yet, or after the
   /// most recent `agents:offline` push. Survives [disconnect] so the
@@ -223,11 +237,21 @@ class ChataptorClient {
 
     // Create conversation on the site channel and join its dedicated channel.
     final createPayload = <String, dynamic>{
-      'user_agent': 'chataptor-flutter/0.1.0 (flutter)',
+      'user_agent': 'chataptor-flutter/0.2.0 (flutter)',
     };
     final customerLang = config.translation.customerLanguage;
     if (config.translation.enabled && customerLang != null) {
       createPayload['client_language'] = customerLang;
+    }
+    // When the customer is identified, surface name and email on the
+    // conversation:create payload so the conversation gets the right
+    // attribution from the start.
+    final customer = config.customer;
+    if (!customer.isAnonymous) {
+      if (customer.name != null) createPayload['customerName'] = customer.name;
+      if (customer.email != null) {
+        createPayload['customerEmail'] = customer.email;
+      }
     }
     final result = await _transport.push(
       _siteTopic(),
@@ -355,10 +379,23 @@ class ChataptorClient {
   ///
   /// Use this after the customer signs in to your app: the SDK swaps
   /// the active [CustomerIdentity] in [config] and — if currently
-  /// connected or connecting — reconnects so the new identity is
-  /// applied on the next channel join. The guest ID assigned during
-  /// the prior anonymous session is preserved across the migration so
-  /// conversation continuity is maintained when the customer signs in.
+  /// connected — reconnects so the new identity is applied on the next
+  /// channel join.
+  ///
+  /// **Continuity:** within an active session, the guest ID assigned
+  /// during the prior anonymous session is preserved across the
+  /// migration so conversation history follows the customer when they
+  /// sign in. However, [ChataptorConfig.sessionIdleTimeout] takes
+  /// precedence — when the persisted session has been idle past the
+  /// configured timeout, the upcoming [connect] inside [identify]
+  /// clears the guest session first and the identified customer joins
+  /// on a fresh anonymous-then-identified thread.
+  ///
+  /// **State requirements:** must be called when the connection is
+  /// either [Connected] or [Disconnected]. Throws [ChataptorStateError]
+  /// when invoked during [Connecting] or [Reconnecting] — those states
+  /// represent in-flight transitions where a concurrent disconnect /
+  /// reconnect would race with the in-flight connect sequence.
   ///
   /// When [newIdentity] equals the current customer (value equality),
   /// [identify] is a no-op and resolves immediately.
@@ -368,7 +405,15 @@ class ChataptorClient {
   Future<void> identify(CustomerIdentity newIdentity) async {
     _requireNotDisposed();
     if (_config.customer == newIdentity) return;
-    final shouldReconnect = currentConnectionState is! Disconnected;
+    final state = currentConnectionState;
+    if (state is Connecting || state is Reconnecting) {
+      throw ChataptorStateError(
+        'Cannot call identify() while the connection is in transition '
+        '($state). Wait until the client is Connected or Disconnected, '
+        'then retry.',
+      );
+    }
+    final shouldReconnect = state is! Disconnected;
     if (shouldReconnect) {
       await disconnect();
     }
@@ -388,6 +433,7 @@ class ChataptorClient {
     _requireNotDisposed();
     await disconnect();
     await _guestIdStore.clear();
+    await _storage.delete(_lastActivityStorageKey());
     _seenMessageIds.clear();
     _messageHistory.clear();
     _siteConfigStream.clear();
@@ -482,14 +528,18 @@ class ChataptorClient {
     final customer = config.customer;
     if (!customer.isAnonymous) {
       if (customer.id != null) params['customerId'] = customer.id;
-      if (customer.email != null) params['customerEmail'] = customer.email;
-      if (customer.name != null) params['customerName'] = customer.name;
-      if (customer.verificationHash != null) {
-        params['customerData'] = {
+      // Identified customer attributes ship in a single customerData
+      // map alongside an optional verification hash and any
+      // merchant-provided custom fields.
+      final customerData = <String, dynamic>{
+        if (customer.email != null) 'email': customer.email,
+        if (customer.name != null) 'name': customer.name,
+        if (customer.verificationHash != null)
           'hash': customer.verificationHash,
-          if (customer.email != null) 'email': customer.email,
-          ...customer.customData,
-        };
+        ...customer.customData,
+      };
+      if (customerData.isNotEmpty) {
+        params['customerData'] = customerData;
       }
     }
 

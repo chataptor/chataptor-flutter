@@ -844,23 +844,33 @@ void main() {
   });
 
   group('ChataptorClient socket params', () {
+    ChataptorClient buildIdentifiedClient(
+      FakeChatTransport transport, {
+      CustomerIdentity? customer,
+    }) {
+      return ChataptorClient.internal(
+        config: ChataptorConfig(
+          siteId: 'abc',
+          widgetKey: 'pk_x',
+          apiUrl: Uri.parse('http://localhost:4000'),
+          customer:
+              customer ??
+              const CustomerIdentity(
+                id: 'user-42',
+                email: 'jane@example.com',
+                name: 'Jane Doe',
+              ),
+        ),
+        transport: transport,
+      );
+    }
+
     test(
       'connect always sends guestId, even for identified customers',
       () async {
         final transport = FakeChatTransport();
         transport.inject.conversationCreated('site:abc', 'conv1');
-        final client = ChataptorClient.internal(
-          config: ChataptorConfig(
-            siteId: 'abc',
-            widgetKey: 'pk_x',
-            apiUrl: Uri.parse('http://localhost:4000'),
-            customer: const CustomerIdentity(
-              id: 'user-42',
-              email: 'jane@example.com',
-            ),
-          ),
-          transport: transport,
-        );
+        final client = buildIdentifiedClient(transport);
 
         await client.connect();
         await Future<void>.delayed(const Duration(milliseconds: 50));
@@ -874,9 +884,111 @@ void main() {
               'is preserved across anonymous→identified migrations',
         );
         expect(params['customerId'], 'user-42');
-        expect(params['customerEmail'], 'jane@example.com');
       },
     );
+
+    test('connect packs identified customer email and name into customerData '
+        '(single map, not separate customerEmail/customerName keys)', () async {
+      final transport = FakeChatTransport();
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      final client = buildIdentifiedClient(transport);
+
+      await client.connect();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      final params = transport.recorded.socketParams[0];
+      expect(
+        params['customerData'],
+        isA<Map<String, dynamic>>(),
+        reason:
+            'identified customers must surface email/name via the '
+            'customerData map — this is the only attribution channel '
+            'honoured on the wire',
+      );
+      final customerData = params['customerData'] as Map<String, dynamic>;
+      expect(customerData['email'], 'jane@example.com');
+      expect(customerData['name'], 'Jane Doe');
+      // Hash absent when no verificationHash was supplied.
+      expect(customerData.containsKey('hash'), isFalse);
+    });
+
+    test('connect merges CustomerIdentity.customData into customerData and '
+        'includes hash when verificationHash is present', () async {
+      final transport = FakeChatTransport();
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      final client = buildIdentifiedClient(
+        transport,
+        customer: const CustomerIdentity(
+          id: 'user-42',
+          email: 'jane@example.com',
+          name: 'Jane Doe',
+          verificationHash: 'deadbeef',
+          customData: {'plan': 'pro', 'lifetimeValue': 4200},
+        ),
+      );
+
+      await client.connect();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      final customerData =
+          transport.recorded.socketParams[0]['customerData']
+              as Map<String, dynamic>;
+      expect(customerData['email'], 'jane@example.com');
+      expect(customerData['name'], 'Jane Doe');
+      expect(customerData['hash'], 'deadbeef');
+      expect(customerData['plan'], 'pro');
+      expect(customerData['lifetimeValue'], 4200);
+    });
+
+    test('connect omits top-level customerEmail/customerName keys — the '
+        'wire format only honours customerData', () async {
+      final transport = FakeChatTransport();
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      final client = buildIdentifiedClient(transport);
+
+      await client.connect();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      final params = transport.recorded.socketParams[0];
+      expect(params.containsKey('customerEmail'), isFalse);
+      expect(params.containsKey('customerName'), isFalse);
+    });
+
+    test('connect sends customerName and customerEmail in the '
+        'conversation:create payload so the conversation gets the '
+        'right attribution from the first message', () async {
+      final transport = FakeChatTransport();
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      final client = buildIdentifiedClient(transport);
+
+      await client.connect();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      final createPush = transport.recorded.pushes.firstWhere(
+        (p) => p.event == 'conversation:create',
+      );
+      expect(createPush.payload['customerName'], 'Jane Doe');
+      expect(createPush.payload['customerEmail'], 'jane@example.com');
+    });
+
+    test('connect omits customerName/customerEmail from conversation:create '
+        'when the customer is anonymous', () async {
+      final transport = FakeChatTransport();
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      final client = ChataptorClient.internal(
+        config: _testConfig(),
+        transport: transport,
+      );
+
+      await client.connect();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      final createPush = transport.recorded.pushes.firstWhere(
+        (p) => p.event == 'conversation:create',
+      );
+      expect(createPush.payload.containsKey('customerName'), isFalse);
+      expect(createPush.payload.containsKey('customerEmail'), isFalse);
+    });
   });
 
   group('ChataptorClient currentMessages buffer', () {
@@ -1054,6 +1166,238 @@ void main() {
 
         expect(client.currentMessages, hasLength(1));
         expect(streamMessages, hasLength(1));
+      },
+    );
+  });
+
+  group('ChataptorClient storage initialization', () {
+    test('when neither config.storage nor storage param is provided, '
+        'the SDK uses a single shared in-memory storage for both _storage and '
+        '_guestIdStore — guestId written via _guestIdStore is visible via '
+        'debugStorage', () async {
+      final transport = FakeChatTransport();
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      final client = ChataptorClient.internal(
+        config: _testConfig(),
+        transport: transport,
+      );
+
+      await client.connect();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      // _guestIdStore.getOrCreate() ran during connect() — guestId is in
+      // the storage instance owned by _guestIdStore. If _storage and
+      // _guestIdStore share a single InMemoryChataptorStorage, the
+      // value must be readable via the publicly exposed debugStorage.
+      expect(
+        await client.debugStorage.readString('chataptor.guest_id.abc'),
+        isNotNull,
+        reason:
+            '_storage and _guestIdStore must share a single backing '
+            'instance when no storage is provided',
+      );
+    });
+  });
+
+  group('ChataptorClient sessionIdleTimeout — history replay', () {
+    test('_loadHistory does NOT touch last_activity_at when history is '
+        'loaded from the conversation:join response', () async {
+      final transport = FakeChatTransport();
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      transport.inject.joinPayload('conversation:conv1', {
+        'messages': [
+          {
+            'msg_id': 'hist-1',
+            'conv_id': 1,
+            'body_src': 'Old message',
+            'author': 'agent',
+            'inserted_at': '2026-05-12T09:00:00Z',
+            'delivery_channel': 'websocket',
+          },
+          {
+            'msg_id': 'hist-2',
+            'conv_id': 1,
+            'body_src': 'Another old message',
+            'author': 'agent',
+            'inserted_at': '2026-05-12T09:01:00Z',
+            'delivery_channel': 'websocket',
+          },
+        ],
+      });
+      final storage = InMemoryChataptorStorage();
+      final client = ChataptorClient.internal(
+        config: ChataptorConfig(
+          siteId: 'abc',
+          widgetKey: 'pk_x',
+          apiUrl: Uri.parse('http://localhost:4000'),
+          sessionIdleTimeout: const Duration(hours: 24),
+        ),
+        transport: transport,
+        storage: storage,
+      );
+
+      await client.connect();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      // History loading must not pretend the user just interacted. If
+      // _loadHistory ever started touching last_activity, idle timeout
+      // would never fire for conversations with any persisted history.
+      expect(
+        await storage.readString('chataptor.last_activity_at.abc'),
+        isNull,
+        reason:
+            'History replay through _loadHistory must not write '
+            'last_activity_at — only live message exchanges count.',
+      );
+    });
+  });
+
+  group('ChataptorClient identify() interactions', () {
+    ChataptorConfig idleConfig({Duration? timeout}) => ChataptorConfig(
+      siteId: 'abc',
+      widgetKey: 'pk_x',
+      apiUrl: Uri.parse('http://localhost:4000'),
+      sessionIdleTimeout: timeout,
+    );
+
+    test('when the persisted session has been idle past sessionIdleTimeout, '
+        'identify() honors the timeout and rotates the guestId (idle wins '
+        'over continuity)', () async {
+      final transport = FakeChatTransport();
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      transport.inject.conversationCreated('site:abc', 'conv2');
+      final storage = InMemoryChataptorStorage();
+
+      final client = ChataptorClient.internal(
+        config: idleConfig(timeout: const Duration(hours: 24)),
+        transport: transport,
+        storage: storage,
+      );
+      await client.connect();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      final firstGuest =
+          transport.recorded.socketParams[0]['guestId'] as String;
+
+      // Simulate the user being idle past the timeout — overwrite the
+      // last_activity_at directly.
+      await storage.writeString(
+        'chataptor.last_activity_at.abc',
+        DateTime.now()
+            .toUtc()
+            .subtract(const Duration(days: 7))
+            .toIso8601String(),
+      );
+
+      await client.identify(
+        const CustomerIdentity(id: 'user-42', email: 'jane@example.com'),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      final secondGuest =
+          transport.recorded.socketParams[1]['guestId'] as String;
+      expect(
+        secondGuest,
+        isNot(firstGuest),
+        reason:
+            'sessionIdleTimeout wins over identify() continuity — when '
+            'the session has been idle past the timeout, identify() '
+            'starts a fresh anonymous session before migrating identity.',
+      );
+      expect(transport.recorded.socketParams[1]['customerId'], 'user-42');
+    });
+
+    test('identify() throws ChataptorStateError when the connection is '
+        'Connecting — caller must wait for a stable state', () async {
+      final transport = FakeChatTransport();
+      final client = ChataptorClient.internal(
+        config: _testConfig(),
+        transport: transport,
+      );
+
+      // Simulate transport-level Connecting — _handleTransportState
+      // maps this to a Connecting client state.
+      transport.inject.connectionState(const TransportConnecting());
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+      expect(client.currentConnectionState, isA<Connecting>());
+
+      expect(
+        () => client.identify(const CustomerIdentity(id: 'user-42')),
+        throwsA(isA<ChataptorStateError>()),
+      );
+    });
+
+    test('identify() throws ChataptorStateError when the connection is '
+        'Reconnecting', () async {
+      final transport = FakeChatTransport();
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      final client = ChataptorClient.internal(
+        config: _testConfig(),
+        transport: transport,
+      );
+      await client.connect();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(client.currentConnectionState, isA<Connected>());
+
+      // Simulate transport-level reconnect.
+      transport.inject.connectionState(
+        const TransportReconnecting(
+          attemptNumber: 1,
+          nextAttemptIn: Duration(seconds: 1),
+        ),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(client.currentConnectionState, isA<Reconnecting>());
+
+      expect(
+        () => client.identify(const CustomerIdentity(id: 'user-42')),
+        throwsA(isA<ChataptorStateError>()),
+      );
+    });
+  });
+
+  group('ChataptorClient clearSession() cleanup', () {
+    test(
+      'clearSession() also removes the persisted last_activity_at stamp',
+      () async {
+        final transport = FakeChatTransport();
+        transport.inject.conversationCreated('site:abc', 'conv1');
+        transport.inject.replyFor(
+          topic: 'conversation:conv1',
+          event: 'message:send',
+          result: const PushOk({
+            'message': {'msg_id': 'sent-1'},
+          }),
+        );
+        final storage = InMemoryChataptorStorage();
+        final client = ChataptorClient.internal(
+          config: ChataptorConfig(
+            siteId: 'abc',
+            widgetKey: 'pk_x',
+            apiUrl: Uri.parse('http://localhost:4000'),
+            sessionIdleTimeout: const Duration(hours: 24),
+          ),
+          transport: transport,
+          storage: storage,
+        );
+        await client.connect();
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        await client.sendMessage('hi');
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        expect(
+          await storage.readString('chataptor.last_activity_at.abc'),
+          isNotNull,
+        );
+
+        await client.clearSession();
+
+        expect(
+          await storage.readString('chataptor.last_activity_at.abc'),
+          isNull,
+          reason:
+              'clearSession() must remove every persisted artefact of the '
+              'session — including last_activity_at — so the next connect() '
+              'starts with a clean slate.',
+        );
       },
     );
   });

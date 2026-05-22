@@ -35,10 +35,9 @@ class AgentInfo {
     this.initials,
   });
 
-  /// Parses a single agent entry as serialized by the backend's
-  /// `agent:available` Phoenix event (also used in the assigned-agent
-  /// payload on the conversation channel). Tolerates both `int` and
-  /// `String` IDs.
+  /// Parses a single agent entry as carried on the `agent:available`
+  /// Phoenix event (also used in the assigned-agent payload on the
+  /// conversation channel). Tolerates both `int` and `String` IDs.
   factory AgentInfo.fromJson(Map<String, dynamic> json) {
     final rawId = json['id'];
     final id = rawId is int

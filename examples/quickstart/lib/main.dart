@@ -3,33 +3,33 @@ import 'package:flutter/material.dart';
 
 import 'headless_demo.dart';
 
+// Supply credentials via --dart-define at run time (never hard-code them):
+//   flutter run \
+//     --dart-define=CHATAPTOR_SITE_ID=<your-site-id> \
+//     --dart-define=CHATAPTOR_WIDGET_KEY=<your-widget-key>
+//
+// See examples/quickstart/run_local.ps1.example for a ready-made script.
+const _siteId = String.fromEnvironment(
+  'CHATAPTOR_SITE_ID',
+  defaultValue: 'YOUR_SITE_ID',
+);
+const _widgetKey = String.fromEnvironment(
+  'CHATAPTOR_WIDGET_KEY',
+  defaultValue: 'YOUR_WIDGET_KEY',
+);
+
+ChataptorConfig _buildConfig({Duration? sessionIdleTimeout}) => ChataptorConfig(
+  siteId: _siteId,
+  widgetKey: _widgetKey,
+  // apiUrl defaults to https://chataptor.com
+  translation: TranslationConfig.auto(customerLanguage: 'pl'),
+  sessionIdleTimeout: sessionIdleTimeout,
+  logger: _DebugLogger(),
+);
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Supply credentials via --dart-define at run time (never hard-code them):
-  //   flutter run \
-  //     --dart-define=CHATAPTOR_SITE_ID=<your-site-id> \
-  //     --dart-define=CHATAPTOR_WIDGET_KEY=<your-widget-key>
-  //
-  // See examples/quickstart/run_local.ps1.example for a ready-made script.
-  const siteId = String.fromEnvironment(
-    'CHATAPTOR_SITE_ID',
-    defaultValue: 'YOUR_SITE_ID',
-  );
-  const widgetKey = String.fromEnvironment(
-    'CHATAPTOR_WIDGET_KEY',
-    defaultValue: 'YOUR_WIDGET_KEY',
-  );
-  await Chataptor.init(
-    config: ChataptorConfig(
-      siteId: siteId,
-      widgetKey: widgetKey,
-      // apiUrl defaults to https://chataptor.com
-      translation: TranslationConfig.auto(customerLanguage: 'pl'),
-      logger: _DebugLogger(),
-    ),
-  );
-
+  await Chataptor.init(config: _buildConfig());
   runApp(const QuickstartApp());
 }
 
@@ -130,6 +130,124 @@ class _Home extends StatelessWidget {
             onTap: () => _push(context, const HeadlessChatScreen()),
           ),
           const Divider(height: 32),
+          const _SectionHeader('v0.2.0 features'),
+          _DemoTile(
+            icon: Icons.vertical_align_bottom,
+            title: 'Bottom sheet (showAppBar: false)',
+            subtitle:
+                'Embeds ChataptorChatScreen inside a DraggableScrollableSheet '
+                'with a drag handle — host owns the chrome',
+            onTap: () => _openAsBottomSheet(context),
+          ),
+          _DemoTile(
+            icon: Icons.person_pin_outlined,
+            title: 'Identify (preserve guest thread)',
+            subtitle:
+                'identify(qa-<epoch>) — keeps the same guestId, so the '
+                'anonymous thread the customer was in follows them into '
+                'the identified session (intended sign-in continuity)',
+            onTap: () async {
+              final epoch = DateTime.now().millisecondsSinceEpoch;
+              final identity = CustomerIdentity(
+                id: 'qa-$epoch',
+                email: 'qa+$epoch@example.com',
+                name: 'QA $epoch',
+              );
+              await Chataptor.instance.identify(identity);
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Identified as ${identity.id} — existing thread (if any) '
+                    'is now linked to this customer',
+                  ),
+                  duration: const Duration(seconds: 5),
+                ),
+              );
+            },
+          ),
+          _DemoTile(
+            icon: Icons.fiber_new_outlined,
+            title: 'Clear session + identify as new user',
+            subtitle:
+                'clearSession() → identify(qa-<epoch>) — drops the guestId '
+                'first so the next chat starts a brand new thread under '
+                'a brand new customer (no continuity)',
+            onTap: () async {
+              await Chataptor.instance.clearSession();
+              final epoch = DateTime.now().millisecondsSinceEpoch;
+              final identity = CustomerIdentity(
+                id: 'qa-$epoch',
+                email: 'qa+$epoch@example.com',
+                name: 'QA $epoch',
+              );
+              await Chataptor.instance.identify(identity);
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Fresh start as ${identity.id} — next chat opens an '
+                    'empty thread for this customer',
+                  ),
+                  duration: const Duration(seconds: 5),
+                ),
+              );
+            },
+          ),
+          _DemoTile(
+            icon: Icons.person_off_outlined,
+            title: 'Re-anonymize',
+            subtitle:
+                'Chataptor.instance.identify(CustomerIdentity.anonymous()) — '
+                'guestId is preserved (continuity in both directions)',
+            onTap: () async {
+              await Chataptor.instance.identify(
+                const CustomerIdentity.anonymous(),
+              );
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Switched back to anonymous')),
+              );
+            },
+          ),
+          _DemoTile(
+            icon: Icons.timer_outlined,
+            title: 'Reload with 30s idle timeout',
+            subtitle:
+                'Tears down + re-inits the singleton with '
+                'sessionIdleTimeout: 30s — send a msg, wait 35s, reopen → '
+                'fresh guest, empty history',
+            onTap: () async {
+              Chataptor.reset();
+              await Chataptor.init(
+                config: _buildConfig(
+                  sessionIdleTimeout: const Duration(seconds: 30),
+                ),
+              );
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Re-initialised with 30s idle timeout active'),
+                ),
+              );
+            },
+          ),
+          _DemoTile(
+            icon: Icons.restart_alt,
+            title: 'Reload with default config',
+            subtitle: 'Tears down + re-inits without idle timeout',
+            onTap: () async {
+              Chataptor.reset();
+              await Chataptor.init(config: _buildConfig());
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Re-initialised with default config'),
+                ),
+              );
+            },
+          ),
+          const Divider(height: 32),
           const _SectionHeader('Session'),
           _DemoTile(
             icon: Icons.delete_sweep_outlined,
@@ -147,6 +265,52 @@ class _Home extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  void _openAsBottomSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.85,
+          minChildSize: 0.4,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (_, scrollController) {
+            return ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
+              child: Material(
+                color: Theme.of(sheetContext).colorScheme.surface,
+                child: Column(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Theme.of(sheetContext).dividerColor,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const Expanded(
+                      child: ChataptorChatScreen(
+                        showAppBar: false,
+                        title: 'Help',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

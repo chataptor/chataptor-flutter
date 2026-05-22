@@ -51,7 +51,7 @@ Use `chataptor` directly when you need a fully custom UI, or when you are integr
 
 ```yaml
 dependencies:
-  chataptor: ^0.1.0
+  chataptor: ^0.2.0
 ```
 
 ```bash
