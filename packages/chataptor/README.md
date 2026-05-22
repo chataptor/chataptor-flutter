@@ -27,11 +27,21 @@ Pure-Dart headless client for [Chataptor](https://chataptor.com?utm_source=pub.d
 
 ## In practice
 
-> A customer in Tokyo writes `注文した商品がまだ届いていません`.
-> Your agent reads `My order hasn't arrived yet.` in English and replies in English.
-> The customer reads the reply in Japanese — instantly, in the same chat.
+```
+👤  Customer in Tokyo
+     注文した商品がまだ届いていません
+        ↓  auto-translated, in real time
+🎧  Your agent reads
+     "My order hasn't arrived yet."
 
-No language switching, no copy-paste, no Google Translate.
+🎧  Your agent replies in English
+     "Sure, let me check your order."
+        ↓  auto-translated, in real time
+👤  Customer reads in Japanese
+     もちろん、ご注文を確認します
+```
+
+Same chat. No language switching, no copy-paste, no Google Translate.
 
 ## When to use this package
 
