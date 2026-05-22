@@ -59,7 +59,7 @@ This package ships the `Chataptor` singleton, ready-to-use chat widgets, theming
 
 ```yaml
 dependencies:
-  chataptor_flutter: ^0.1.0
+  chataptor_flutter: ^0.2.0
 ```
 
 ```bash
@@ -104,7 +104,7 @@ MaterialApp(
 )
 ```
 
-v0.1.0 ships English and Polish. Ten additional locales arrive in v0.5.0.
+English and Polish are bundled out of the box. Ten additional locales arrive in v0.5.0.
 
 ### 3. Open the chat screen
 

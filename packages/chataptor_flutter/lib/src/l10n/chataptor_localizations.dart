@@ -2,8 +2,8 @@ import 'package:flutter/widgets.dart';
 
 /// Localizable strings used by Chataptor widgets.
 ///
-/// v0.1.0 ships English and Polish. The remaining 10 locales land in
-/// v0.5.0.
+/// English and Polish are bundled. The remaining 10 locales (`de`, `es`,
+/// `fr`, `it`, `uk`, `cs`, `pt`, `ja`, `zh`, `ar`) land in v0.5.0.
 @immutable
 class ChataptorLocalizations {
   /// Creates a [ChataptorLocalizations].
@@ -81,7 +81,7 @@ class ChataptorLocalizations {
     offlineBannerSubtitle: 'Odpowiemy, gdy tylko wrócimy.',
   );
 
-  /// Locales supported out of the box in v0.1.0.
+  /// Locales bundled out of the box.
   static const List<Locale> supportedLocales = [Locale('en'), Locale('pl')];
 
   /// Placeholder in composer input field.

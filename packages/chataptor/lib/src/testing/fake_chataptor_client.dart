@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:chataptor/src/auth/customer_identity.dart';
 import 'package:chataptor/src/client/chataptor_client.dart';
 import 'package:chataptor/src/client/connection_state.dart';
 import 'package:chataptor/src/client/send_result.dart';
@@ -25,6 +26,11 @@ class FakeChataptorClientRecorded {
 
   /// Every `clearSession()` call.
   int clearSessionCalls = 0;
+
+  /// Every [CustomerIdentity] passed to `identify()`, in call order. Use to
+  /// assert that a host-app flow invoked identify after the merchant's
+  /// own sign-in path completed.
+  final List<CustomerIdentity> identifyCalls = [];
 }
 
 /// Scripting API for a [FakeChataptorClient].
@@ -62,9 +68,11 @@ class FakeChataptorClientInject {
 /// protocol-layer tests of the SDK itself, reach for `FakeChatTransport`
 /// instead.
 ///
-/// The fake does not implement every [ChataptorClient] member yet; v0.1.0
-/// covers the surface exercised by the drop-in widgets. Additional members
-/// will be added when their real counterparts ship.
+/// The fake does not implement every [ChataptorClient] member — it covers
+/// the surface exercised by the drop-in widgets and by typical merchant
+/// host-app tests (connect / disconnect / sendMessage / clearSession /
+/// identify, plus the corresponding streams). Additional members are
+/// added as the real counterparts ship.
 class FakeChataptorClient implements ChataptorClient {
   /// Creates a [FakeChataptorClient] in [initialConnectionState] (defaults
   /// to `Disconnected(userRequested)`), optionally with an [initialAgent].
@@ -158,6 +166,11 @@ class FakeChataptorClient implements ChataptorClient {
   }
 
   @override
+  Future<void> identify(CustomerIdentity newIdentity) async {
+    recorded.identifyCalls.add(newIdentity);
+  }
+
+  @override
   Future<void> dispose() async {
     await _messages.close();
     await _errors.close();
@@ -165,9 +178,10 @@ class FakeChataptorClient implements ChataptorClient {
     await _agent.close();
   }
 
-  // Members below are stubs for v0.1.0 — they simply record or no-op. Expand
-  // as the real ChataptorClient surface grows.
-
+  // Catch-all fallback for any [ChataptorClient] member not yet stubbed —
+  // throws `NoSuchMethodError` at call time so missing coverage is obvious
+  // rather than silently no-op. Expand the explicit stubs above as the
+  // real surface grows.
   @override
   // ignore: avoid_annotating_with_dynamic
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);

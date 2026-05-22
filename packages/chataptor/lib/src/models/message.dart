@@ -58,7 +58,7 @@ class Message {
   final MessageType type;
 
   /// Structured metadata for quick-reply options or carousel cards. Shape
-  /// matches the backend contract; SDK exposes it opaquely for now.
+  /// matches the wire format; SDK exposes it opaquely for now.
   final Map<String, dynamic>? richMetadata;
 
   /// Which transport actually delivered this message.

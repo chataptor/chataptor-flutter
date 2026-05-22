@@ -1,6 +1,6 @@
 name: chataptor
 description: Headless Dart client for Chataptor — real-time, auto-translated customer support chat in 100+ languages. Free forever. Pair with chataptor_flutter for drop-in widgets.
-version: 0.1.0
+version: 0.2.0
 repository: https://github.com/chataptor/chataptor-flutter
 homepage: https://chataptor.com?utm_source=pub.dev&utm_medium=referral&utm_campaign=chataptor&utm_content=pubspec_homepage
 issue_tracker: https://github.com/chataptor/chataptor-flutter/issues
