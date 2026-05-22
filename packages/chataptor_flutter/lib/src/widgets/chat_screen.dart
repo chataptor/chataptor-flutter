@@ -20,6 +20,7 @@ class ChataptorChatScreen extends StatefulWidget {
     this.theme,
     this.title,
     this.showPoweredBy = true,
+    this.showAppBar = true,
   });
 
   /// Optional theme override.
@@ -32,6 +33,15 @@ class ChataptorChatScreen extends StatefulWidget {
   /// the message list and the composer. Defaults to `true`. Set to `false`
   /// to hide the attribution (white-label).
   final bool showPoweredBy;
+
+  /// Whether the screen renders its own [AppBar]. Defaults to `true`.
+  ///
+  /// Set to `false` when embedding the screen inside a bottom sheet, dialog,
+  /// or any host that already provides its own chrome (drag handle, close
+  /// button, etc.). The agent-presence header still renders inline at the
+  /// top of the body so customers keep the "who's online" cue regardless
+  /// of how the chat is mounted.
+  final bool showAppBar;
 
   @override
   State<ChataptorChatScreen> createState() => _ChataptorChatScreenState();
@@ -121,22 +131,34 @@ class _ChataptorChatScreenState extends State<ChataptorChatScreen> {
 
     return Scaffold(
       backgroundColor: theme.backgroundColor,
-      appBar: AppBar(
-        backgroundColor: theme.surfaceColor,
-        titleSpacing: 0,
-        title: ChataptorChatHeader(
-          title: resolvedTitle,
-          onlineAgents: _onlineAgents,
-          theme: theme,
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          tooltip: loc.closeChat,
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
-      ),
+      appBar: widget.showAppBar
+          ? AppBar(
+              backgroundColor: theme.surfaceColor,
+              titleSpacing: 0,
+              title: ChataptorChatHeader(
+                title: resolvedTitle,
+                onlineAgents: _onlineAgents,
+                theme: theme,
+              ),
+              leading: IconButton(
+                icon: const Icon(Icons.close),
+                tooltip: loc.closeChat,
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
+            )
+          : null,
       body: Column(
         children: [
+          if (!widget.showAppBar)
+            Container(
+              color: theme.surfaceColor,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: ChataptorChatHeader(
+                title: resolvedTitle,
+                onlineAgents: _onlineAgents,
+                theme: theme,
+              ),
+            ),
           Expanded(
             child: ChataptorMessageList(
               messages: _messages,

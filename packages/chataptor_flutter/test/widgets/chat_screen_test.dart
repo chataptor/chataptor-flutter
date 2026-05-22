@@ -244,6 +244,49 @@ void main() {
     },
   );
 
+  testWidgets('showAppBar defaults to true — AppBar is rendered', (
+    tester,
+  ) async {
+    final transport = FakeChatTransport();
+    transport.inject.conversationCreated('site:abc', 'conv1');
+    await Chataptor.init(
+      siteId: 'abc',
+      widgetKey: 'pk_x',
+      apiUrl: Uri.parse('http://localhost:4000'),
+      transport: transport,
+    );
+
+    await tester.pumpWidget(const MaterialApp(home: ChataptorChatScreen()));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.byType(AppBar), findsOneWidget);
+    expect(find.byType(ChataptorChatHeader), findsOneWidget);
+  });
+
+  testWidgets('showAppBar: false — no AppBar, header renders inline', (
+    tester,
+  ) async {
+    final transport = FakeChatTransport();
+    transport.inject.conversationCreated('site:abc', 'conv1');
+    await Chataptor.init(
+      siteId: 'abc',
+      widgetKey: 'pk_x',
+      apiUrl: Uri.parse('http://localhost:4000'),
+      transport: transport,
+    );
+
+    await tester.pumpWidget(
+      const MaterialApp(home: ChataptorChatScreen(showAppBar: false)),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.byType(AppBar), findsNothing);
+    // Header still surfaces so hosts (sheet/dialog) keep agent presence UX.
+    expect(find.byType(ChataptorChatHeader), findsOneWidget);
+    // No close button when host owns the chrome.
+    expect(find.byIcon(Icons.close), findsNothing);
+  });
+
   testWidgets('foregroundActive mode does NOT disconnect on dispose', (
     tester,
   ) async {
