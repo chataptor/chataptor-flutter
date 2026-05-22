@@ -29,10 +29,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Flutter ships with Dart, and the workspace includes
-      # `examples/quickstart` which depends on Flutter — using
-      # `dart-lang/setup-dart` here would fail `pub get` at the workspace
-      # root.
+      # `setup-dart` first because it wires the OIDC token into
+      # `~/.config/dart/pub-tokens.json` when `id-token: write` is
+      # granted. `flutter-action` ships its own bundled Dart but does
+      # not configure pub.dev OIDC, so `dart pub publish` would fall
+      # back to interactive Google OAuth without this step.
+      - uses: dart-lang/setup-dart@v1
+
+      # The workspace includes `examples/quickstart`, which depends on
+      # Flutter — `pub get` at the workspace root therefore needs the
+      # Flutter SDK as well as Dart.
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: any
