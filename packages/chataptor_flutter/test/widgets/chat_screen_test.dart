@@ -337,28 +337,27 @@ void main() {
     },
   );
 
-  testWidgets(
-    'manualOffline without variant copy: banner falls back to l10n',
-    (tester) async {
-      final transport = FakeChatTransport();
-      transport.inject.conversationCreated('site:abc', 'conv1');
-      transport.inject.joinPayload('site:abc', {
-        'site_config': {'offline_mode': 'manual_offline'},
-      });
-      await Chataptor.init(
-        siteId: 'abc',
-        widgetKey: 'pk_x',
-        apiUrl: Uri.parse('http://localhost:4000'),
-        transport: transport,
-      );
+  testWidgets('manualOffline without variant copy: banner falls back to l10n', (
+    tester,
+  ) async {
+    final transport = FakeChatTransport();
+    transport.inject.conversationCreated('site:abc', 'conv1');
+    transport.inject.joinPayload('site:abc', {
+      'site_config': {'offline_mode': 'manual_offline'},
+    });
+    await Chataptor.init(
+      siteId: 'abc',
+      widgetKey: 'pk_x',
+      apiUrl: Uri.parse('http://localhost:4000'),
+      transport: transport,
+    );
 
-      await tester.pumpWidget(const MaterialApp(home: ChataptorChatScreen()));
-      await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpWidget(const MaterialApp(home: ChataptorChatScreen()));
+    await tester.pump(const Duration(milliseconds: 100));
 
-      // Default English fallback strings.
-      expect(find.textContaining('Currently offline'), findsOneWidget);
-    },
-  );
+    // Default English fallback strings.
+    expect(find.textContaining('Currently offline'), findsOneWidget);
+  });
 
   testWidgets('auto mode renders no offline banner', (tester) async {
     final transport = FakeChatTransport();
