@@ -573,6 +573,129 @@ void main() {
     });
   });
 
+  group('ChataptorClient identify()', () {
+    test(
+      'with the same identity is a no-op — no extra channel joins',
+      () async {
+        final transport = FakeChatTransport();
+        transport.inject.conversationCreated('site:abc', 'conv1');
+        final client = ChataptorClient.internal(
+          config: _testConfig(),
+          transport: transport,
+        );
+        await client.connect();
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        final joinsBefore = transport.recorded.joinedChannels.length;
+
+        await client.identify(const CustomerIdentity.anonymous());
+
+        expect(transport.recorded.joinedChannels.length, joinsBefore);
+      },
+    );
+
+    test('with a new identity reconnects with updated customer', () async {
+      final transport = FakeChatTransport();
+      // Two `conversation:create` replies: initial + reconnect-after-identify.
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      final client = ChataptorClient.internal(
+        config: _testConfig(),
+        transport: transport,
+      );
+      await client.connect();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      await client.identify(
+        const CustomerIdentity(id: 'user-42', email: 'jane@example.com'),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(client.config.customer.id, 'user-42');
+      expect(client.config.customer.email, 'jane@example.com');
+      // Site channel rejoined → two joins to `site:abc` recorded.
+      expect(
+        transport.recorded.joinedChannels.where((t) => t == 'site:abc').length,
+        2,
+      );
+    });
+
+    test('preserves guestId across anonymous → identified migration', () async {
+      final transport = FakeChatTransport();
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      final client = ChataptorClient.internal(
+        config: _testConfig(),
+        transport: transport,
+      );
+      await client.connect();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      final initialGuestId =
+          transport.recorded.socketParams[0]['guestId'] as String?;
+      expect(initialGuestId, isNotNull);
+
+      await client.identify(
+        const CustomerIdentity(id: 'user-42', email: 'jane@example.com'),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      // After identify, the reconnect must still carry the same guestId
+      // so conversation continuity is preserved across the migration.
+      expect(transport.recorded.socketParams[1]['guestId'], initialGuestId);
+      expect(transport.recorded.socketParams[1]['customerId'], 'user-42');
+    });
+
+    test('before connect just swaps config (no reconnect)', () async {
+      final transport = FakeChatTransport();
+      transport.inject.conversationCreated('site:abc', 'conv1');
+      final client = ChataptorClient.internal(
+        config: _testConfig(),
+        transport: transport,
+      );
+
+      await client.identify(const CustomerIdentity(id: 'user-42'));
+
+      expect(client.config.customer.id, 'user-42');
+      expect(client.currentConnectionState, isA<Disconnected>());
+      expect(transport.recorded.joinedChannels, isEmpty);
+    });
+  });
+
+  group('ChataptorClient socket params', () {
+    test(
+      'connect always sends guestId, even for identified customers',
+      () async {
+        final transport = FakeChatTransport();
+        transport.inject.conversationCreated('site:abc', 'conv1');
+        final client = ChataptorClient.internal(
+          config: ChataptorConfig(
+            siteId: 'abc',
+            widgetKey: 'pk_x',
+            apiUrl: Uri.parse('http://localhost:4000'),
+            customer: const CustomerIdentity(
+              id: 'user-42',
+              email: 'jane@example.com',
+            ),
+          ),
+          transport: transport,
+        );
+
+        await client.connect();
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+
+        final params = transport.recorded.socketParams[0];
+        expect(
+          params['guestId'],
+          isNotNull,
+          reason:
+              'guestId must always be sent so conversation continuity '
+              'is preserved across anonymous→identified migrations',
+        );
+        expect(params['customerId'], 'user-42');
+        expect(params['customerEmail'], 'jane@example.com');
+      },
+    );
+  });
+
   group('ChataptorClient currentMessages buffer', () {
     test('currentMessages is empty before any connect', () {
       final transport = FakeChatTransport();

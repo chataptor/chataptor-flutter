@@ -35,6 +35,13 @@ class FakeChatTransportRecorded {
 
   /// Join params passed alongside each [joinedChannels] entry (same index).
   final List<Map<String, dynamic>> joinedChannelParams = [];
+
+  /// Socket-level params (e.g. `guestId`, `customerId`, `widgetKey`) passed
+  /// to each [FakeChatTransport.connect] call, in order. Use these to
+  /// assert what the SDK sent on connect — both initial connects and
+  /// reconnects triggered by mid-session operations like
+  /// `ChataptorClient.identify()`.
+  final List<Map<String, dynamic>> socketParams = [];
 }
 
 /// Event-injection API for driving test scenarios.
@@ -117,6 +124,7 @@ class FakeChatTransport implements ChatTransport {
 
   @override
   Future<void> connect(TransportConfig config) async {
+    recorded.socketParams.add(Map.of(config.params));
     _stateController.add(const TransportConnecting());
     await Future<void>.delayed(Duration.zero);
     _stateController.add(const TransportConnected());

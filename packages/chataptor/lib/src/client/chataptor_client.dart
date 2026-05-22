@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:chataptor/src/auth/customer_identity.dart';
 import 'package:chataptor/src/auth/guest_id_store.dart';
 import 'package:chataptor/src/client/connection_state.dart';
 import 'package:chataptor/src/client/message_parser.dart';
@@ -34,10 +35,11 @@ class ChataptorClient {
 
   /// Internal / test entry point that lets callers inject a transport.
   ChataptorClient.internal({
-    required this.config,
+    required ChataptorConfig config,
     required ChatTransport transport,
     ChataptorStorage? storage,
-  }) : _transport = transport,
+  }) : _config = config,
+       _transport = transport,
        _storage = storage ?? config.storage ?? InMemoryChataptorStorage(),
        _guestIdStore = GuestIdStore(
          storage: storage ?? config.storage ?? InMemoryChataptorStorage(),
@@ -48,8 +50,12 @@ class ChataptorClient {
     _transport.events.listen(_handleTransportEvent);
   }
 
-  /// The active configuration.
-  final ChataptorConfig config;
+  /// The active configuration. Most fields are immutable for the lifetime
+  /// of the client, but [ChataptorConfig.customer] may be swapped at
+  /// runtime via [identify]; reading [config] always returns the current
+  /// value.
+  ChataptorConfig get config => _config;
+  ChataptorConfig _config;
 
   final ChatTransport _transport;
   final ChataptorStorage _storage;
@@ -314,6 +320,33 @@ class ChataptorClient {
     };
   }
 
+  /// Migrates the current session to a new [CustomerIdentity].
+  ///
+  /// Use this after the customer signs in to your app: the SDK swaps
+  /// the active [CustomerIdentity] in [config] and — if currently
+  /// connected or connecting — reconnects so the new identity is
+  /// applied on the next channel join. The guest ID assigned during
+  /// the prior anonymous session is preserved across the migration so
+  /// conversation continuity is maintained when the customer signs in.
+  ///
+  /// When [newIdentity] equals the current customer (value equality),
+  /// [identify] is a no-op and resolves immediately.
+  ///
+  /// Safe to call before [connect]: only the configuration is updated;
+  /// no premature reconnect is triggered.
+  Future<void> identify(CustomerIdentity newIdentity) async {
+    _requireNotDisposed();
+    if (_config.customer == newIdentity) return;
+    final shouldReconnect = currentConnectionState is! Disconnected;
+    if (shouldReconnect) {
+      await disconnect();
+    }
+    _config = _config.copyWith(customer: newIdentity);
+    if (shouldReconnect) {
+      await connect();
+    }
+  }
+
   /// Clears the local session: deletes the stored guest ID and disconnects if
   /// currently connected. The next [connect] call will create a new anonymous
   /// identity and open a fresh conversation on the backend.
@@ -404,16 +437,19 @@ class ChataptorClient {
   }
 
   Future<Map<String, dynamic>> _buildSocketParams() async {
+    // guestId is always sent — even for identified customers. Omitting
+    // it on the identified path would break conversation continuity
+    // when a customer migrates from anonymous to identified mid-session
+    // via [identify].
     final params = <String, dynamic>{
       'widgetKey': config.widgetKey,
       'siteId': config.siteId,
       'platform': 'flutter',
+      'guestId': await _guestIdStore.getOrCreate(),
     };
 
     final customer = config.customer;
-    if (customer.isAnonymous) {
-      params['guestId'] = await _guestIdStore.getOrCreate();
-    } else {
+    if (!customer.isAnonymous) {
       if (customer.id != null) params['customerId'] = customer.id;
       if (customer.email != null) params['customerEmail'] = customer.email;
       if (customer.name != null) params['customerName'] = customer.name;
