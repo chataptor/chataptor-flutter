@@ -73,9 +73,15 @@ onPressed: () => Navigator.of(context).push(
 
 That's it. The screen connects on mount, disconnects on dispose, and handles anonymous identification automatically.
 
-## 6. Identifying your users (optional, v0.2.0)
+## 6. Identifying your users (optional)
 
-Identified-customer support lands in v0.2.0. Until then, v0.1.0 treats every user as anonymous and maintains conversation continuity across app launches via a device-stable guest ID.
+v0.1.0 treats every user as anonymous and maintains conversation continuity across app launches via a device-stable guest ID. From v0.2.0 you can pass a `CustomerIdentity` to give agents your user's email, name, and CRM linkage — and optionally an HMAC verification hash that proves the identity is real.
+
+See [Identifying customers](./identified-customers.md) for the full guide, including copy-paste server recipes in Elixir, Ruby, Node.js, PHP, and Python.
+
+## 7. Running multiple sites in one app (advanced)
+
+If your app serves more than one Chataptor site — reseller or white-label setup — see [Running multiple Chataptor sites in one app](./multi-instance.md) for the per-scope client pattern.
 
 ## Troubleshooting
 
