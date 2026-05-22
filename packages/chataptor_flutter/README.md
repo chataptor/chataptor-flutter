@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/chataptor/chataptor-flutter/main/.github/assets/chataptor-logotype-white.png" alt="Chataptor" height="56">
+</p>
+
 # chataptor_flutter
 
 [![pub.dev](https://img.shields.io/pub/v/chataptor_flutter.svg)](https://pub.dev/packages/chataptor_flutter)

@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/chataptor-logotype-white.png">
+    <img src=".github/assets/chataptor-logotype.png" alt="Chataptor" height="56">
+  </picture>
+</p>
+
 # Chataptor Flutter SDK
 
 [![CI](https://github.com/chataptor/chataptor-flutter/actions/workflows/ci.yml/badge.svg)](https://github.com/chataptor/chataptor-flutter/actions/workflows/ci.yml)
